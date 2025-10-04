@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react'
 import * as d3 from 'd3'
+import * as topojson from 'topojson-client'
 import { motion, AnimatePresence } from 'framer-motion'
 import { FileText, TrendingUp, DollarSign } from 'lucide-react'
 
@@ -17,6 +18,14 @@ const mockStateData: Record<string, StateData> = {
   'TX': { name: 'Texas', bills: 38, funding: '$3.1M', trending: ['Energy Independence Act', 'Border Security Bill'] },
   'NY': { name: 'New York', bills: 42, funding: '$1.8M', trending: ['Financial Reform Act', 'Healthcare Access Bill'] },
   'FL': { name: 'Florida', bills: 35, funding: '$2.5M', trending: ['Education Reform Bill', 'Hurricane Relief Act'] },
+  'WA': { name: 'Washington', bills: 28, funding: '$1.2M', trending: ['Tech Innovation Act', 'Green Energy Bill'] },
+  'IL': { name: 'Illinois', bills: 31, funding: '$1.5M', trending: ['Infrastructure Bill', 'Education Reform'] },
+  'PA': { name: 'Pennsylvania', bills: 29, funding: '$1.4M', trending: ['Healthcare Bill', 'Tax Reform Act'] },
+  'AZ': { name: 'Arizona', bills: 24, funding: '$1.1M', trending: ['Water Rights Bill', 'Immigration Reform'] },
+  'GA': { name: 'Georgia', bills: 26, funding: '$1.3M', trending: ['Voting Rights Act', 'Business Tax Bill'] },
+  'MI': { name: 'Michigan', bills: 27, funding: '$1.2M', trending: ['Auto Industry Bill', 'Clean Water Act'] },
+  'CO': { name: 'Colorado', bills: 25, funding: '$1.0M', trending: ['Cannabis Reform', 'Outdoor Recreation Act'] },
+  'OH': { name: 'Ohio', bills: 30, funding: '$1.4M', trending: ['Manufacturing Bill', 'Education Funding'] },
 }
 
 export default function USMapInteractive() {
@@ -27,8 +36,8 @@ export default function USMapInteractive() {
   useEffect(() => {
     if (!mapRef.current) return
 
-    const width = 800
-    const height = 500
+    const width = 960
+    const height = 600
     
     // Clear any existing SVG
     d3.select(mapRef.current).select('svg').remove()
@@ -38,23 +47,6 @@ export default function USMapInteractive() {
       .attr('viewBox', `0 0 ${width} ${height}`)
       .attr('class', 'w-full h-full')
 
-
-    // Create state positions accurately placed on the USA map
-    const states = [
-      { id: 'CA', x: 120, y: 280, label: 'CA' }, // California - West Coast
-      { id: 'TX', x: 420, y: 420, label: 'TX' }, // Texas - South Central
-      { id: 'NY', x: 680, y: 180, label: 'NY' }, // New York - Northeast
-      { id: 'FL', x: 650, y: 450, label: 'FL' }, // Florida - Southeast
-      { id: 'WA', x: 180, y: 120, label: 'WA' }, // Washington - Pacific Northwest
-      { id: 'IL', x: 520, y: 240, label: 'IL' }, // Illinois - Midwest
-      { id: 'PA', x: 620, y: 200, label: 'PA' }, // Pennsylvania - Northeast
-      { id: 'AZ', x: 280, y: 360, label: 'AZ' }, // Arizona - Southwest
-      { id: 'GA', x: 600, y: 380, label: 'GA' }, // Georgia - Southeast
-      { id: 'MI', x: 560, y: 180, label: 'MI' }, // Michigan - Great Lakes
-      { id: 'CO', x: 380, y: 280, label: 'CO' }, // Colorado - Mountain West
-      { id: 'OH', x: 580, y: 220, label: 'OH' }, // Ohio - Midwest
-    ]
-
     // Add glow effect
     const defs = svg.append('defs')
     
@@ -62,85 +54,115 @@ export default function USMapInteractive() {
       .attr('id', 'glow')
     
     filter.append('feGaussianBlur')
-      .attr('stdDeviation', '3')
+      .attr('stdDeviation', '2')
       .attr('result', 'coloredBlur')
     
     const feMerge = filter.append('feMerge')
     feMerge.append('feMergeNode').attr('in', 'coloredBlur')
     feMerge.append('feMergeNode').attr('in', 'SourceGraphic')
 
-    // Create state circles
-    const stateGroups = svg.selectAll('.state')
-      .data(states)
-      .enter()
-      .append('g')
-      .attr('class', 'state cursor-pointer')
-      .attr('transform', d => `translate(${d.x}, ${d.y})`)
+    // Create projection for US map
+    const projection = d3.geoAlbersUsa()
+      .scale(1200)
+      .translate([width / 2, height / 2])
 
-    // Add circles for states
-    stateGroups.append('circle')
-      .attr('r', 40)
-      .attr('fill', 'rgba(10, 147, 150, 0.3)')
-      .attr('stroke', '#0a9396')
-      .attr('stroke-width', 2)
-      .attr('filter', 'url(#glow)')
-      .on('mouseenter', function(event, d) {
-        d3.select(this)
-          .transition()
-          .duration(200)
-          .attr('r', 45)
-          .attr('fill', 'rgba(10, 147, 150, 0.5)')
-        
-        setHoveredState(d.id)
-      })
-      .on('mouseleave', function(event, d) {
-        d3.select(this)
-          .transition()
-          .duration(200)
-          .attr('r', 40)
-          .attr('fill', 'rgba(10, 147, 150, 0.3)')
-        
-        setHoveredState(null)
-      })
-      .on('click', function(event, d) {
-        setSelectedState(d.id)
-      })
+    const path = d3.geoPath().projection(projection)
 
-    // Add state labels
-    stateGroups.append('text')
-      .attr('text-anchor', 'middle')
-      .attr('dy', '0.3em')
-      .attr('fill', 'white')
-      .attr('font-size', '16')
-      .attr('font-weight', 'bold')
-      .attr('pointer-events', 'none')
-      .text(d => d.label)
-
-    // Add pulsing animation to random states
-    const pulseAnimation = () => {
-      const randomState = states[Math.floor(Math.random() * states.length)]
-      
-      svg.append('circle')
-        .attr('cx', randomState.x)
-        .attr('cy', randomState.y)
-        .attr('r', 40)
-        .attr('fill', 'none')
-        .attr('stroke', '#f77f00')
-        .attr('stroke-width', 3)
-        .attr('opacity', 0.8)
-        .transition()
-        .duration(2000)
-        .attr('r', 60)
-        .attr('opacity', 0)
-        .remove()
+    // State FIPS to abbreviation mapping
+    const fipsToAbbr: Record<string, string> = {
+      '06': 'CA', '48': 'TX', '36': 'NY', '12': 'FL', '53': 'WA',
+      '17': 'IL', '42': 'PA', '04': 'AZ', '13': 'GA', '26': 'MI',
+      '08': 'CO', '39': 'OH'
     }
 
-    // Pulse every 3 seconds
-    const interval = setInterval(pulseAnimation, 3000)
-    
-    return () => {
-      clearInterval(interval)
-    }
+    // Fetch US states TopoJSON data
+    fetch('https://cdn.jsdelivr.net/npm/us-atlas@3/states-10m.json')
+      .then(response => response.json())
+      .then(us => {
+        // Convert TopoJSON to GeoJSON
+        const statesGeo: any = topojson.feature(us, us.objects.states)
+
+        // Draw state paths
+        svg.append('g')
+          .selectAll('path')
+          .data(statesGeo.features)
+          .enter()
+          .append('path')
+          .attr('d', path as any)
+          .attr('class', 'state-path cursor-pointer')
+          .attr('fill', (d: any) => {
+            // Highlight states with data
+            const stateAbbr = fipsToAbbr[d.id]
+            return stateAbbr && mockStateData[stateAbbr] ? 'rgba(10, 147, 150, 0.4)' : 'rgba(71, 85, 105, 0.3)'
+          })
+          .attr('stroke', '#0a9396')
+          .attr('stroke-width', 1.5)
+          .attr('filter', 'url(#glow)')
+          .on('mouseenter', function(event, d: any) {
+            const stateAbbr = fipsToAbbr[d.id]
+            if (stateAbbr && mockStateData[stateAbbr]) {
+              d3.select(this)
+                .transition()
+                .duration(200)
+                .attr('fill', 'rgba(10, 147, 150, 0.7)')
+                .attr('stroke-width', 2.5)
+              
+              setHoveredState(stateAbbr)
+            }
+          })
+          .on('mouseleave', function(event, d: any) {
+            const stateAbbr = fipsToAbbr[d.id]
+            d3.select(this)
+              .transition()
+              .duration(200)
+              .attr('fill', stateAbbr && mockStateData[stateAbbr] ? 'rgba(10, 147, 150, 0.4)' : 'rgba(71, 85, 105, 0.3)')
+              .attr('stroke-width', 1.5)
+            
+            setHoveredState(null)
+          })
+          .on('click', function(event, d: any) {
+            const stateAbbr = fipsToAbbr[d.id]
+            if (stateAbbr && mockStateData[stateAbbr]) {
+              setSelectedState(stateAbbr)
+            }
+          })
+
+        // Add pulsing animation to random active states
+        const activeStates = Object.keys(mockStateData)
+        const pulseAnimation = () => {
+          const randomStateAbbr = activeStates[Math.floor(Math.random() * activeStates.length)]
+          const stateFips = Object.keys(fipsToAbbr).find(fips => fipsToAbbr[fips] === randomStateAbbr)
+          const stateFeature = statesGeo.features.find((f: any) => f.id === stateFips)
+          
+          if (stateFeature && path.centroid(stateFeature as any)) {
+            const [cx, cy] = path.centroid(stateFeature as any)
+            
+            svg.append('circle')
+              .attr('cx', cx)
+              .attr('cy', cy)
+              .attr('r', 5)
+              .attr('fill', 'none')
+              .attr('stroke', '#f77f00')
+              .attr('stroke-width', 2)
+              .attr('opacity', 0.8)
+              .transition()
+              .duration(2000)
+              .attr('r', 30)
+              .attr('opacity', 0)
+              .remove()
+          }
+        }
+
+        // Pulse every 3 seconds
+        const interval = setInterval(pulseAnimation, 3000)
+        
+        return () => {
+          clearInterval(interval)
+        }
+      })
+      .catch(error => {
+        console.error('Error loading map data:', error)
+      })
   }, [])
 
   const stateData = hoveredState ? mockStateData[hoveredState] || {
@@ -174,7 +196,7 @@ export default function USMapInteractive() {
         </div>
       </div>
 
-      <div ref={mapRef} className="relative h-[500px]" />
+      <div ref={mapRef} className="relative h-[600px]" />
 
       <AnimatePresence>
         {stateData && (
