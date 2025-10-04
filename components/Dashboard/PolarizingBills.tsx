@@ -127,7 +127,7 @@ export default function PolarizingBills() {
           >
             <div className="mb-4">
               <span className="text-xs font-mono text-gray-500">{bill.id}</span>
-              <h3 className="text-lg font-semibold text-white mt-1">{bill.title}</h3>
+              <h3 className="text-lg font-semibold text-white mt-1 serif-text">{bill.title}</h3>
             </div>
 
             <PartisanMeter bill={bill} />

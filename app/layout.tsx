@@ -1,10 +1,14 @@
 import type { Metadata } from 'next'
-import { Inter } from 'next/font/google'
+import { IBM_Plex_Serif } from 'next/font/google'
 import './globals.css'
 import Sidebar from '@/components/Layout/Sidebar'
 import SearchBar from '@/components/Layout/SearchBar'
 
-const inter = Inter({ subsets: ['latin'] })
+const ibmPlexSerif = IBM_Plex_Serif({ 
+  weight: ['300', '400', '500', '600', '700'],
+  subsets: ['latin'],
+  variable: '--font-ibm-plex'
+})
 
 export const metadata: Metadata = {
   title: 'Oversight - Truth Engine for Democracy',
@@ -18,7 +22,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={`${inter.className} bg-slate-950 min-h-screen`}>
+      <body className={`${ibmPlexSerif.className} bg-slate-950 min-h-screen`}>
         <Sidebar />
         
         <div className="ml-64 min-h-screen">

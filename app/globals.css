@@ -16,6 +16,52 @@
       --background-end-rgb: 0, 0, 0;
     }
   }
+  
+  /* Apply IBM Plex Serif - clean, modern serif */
+  * {
+    font-family: 'IBM Plex Serif', serif !important;
+  }
+  
+  /* Optimize for clean, modern look */
+  body {
+    font-size: 16px;
+    line-height: 1.5;
+    font-weight: 400;
+    letter-spacing: -0.011em;
+  }
+  
+  /* Headings - lighter weight for cleaner look */
+  h1, h2, h3, h4, h5, h6 {
+    font-weight: 600;
+    letter-spacing: -0.02em;
+  }
+  
+  h1 {
+    font-weight: 500;
+  }
+  
+  /* Small text sizes */
+  .text-xs {
+    font-size: 13px;
+    font-weight: 400;
+  }
+  
+  .text-sm {
+    font-size: 14px;
+    font-weight: 400;
+  }
+  
+  /* Input fields */
+  input, textarea, select {
+    font-size: 15px;
+    font-weight: 400;
+  }
+  
+  /* Navigation - clean weight */
+  nav {
+    font-size: 14px;
+    font-weight: 500;
+  }
 }
 
 body {

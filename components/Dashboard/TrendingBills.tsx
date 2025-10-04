@@ -107,7 +107,7 @@ export default function TrendingBills() {
                     {bill.controversyLevel} controversy
                   </div>
                 </div>
-                <h3 className="text-white font-semibold group-hover:text-truth-green transition-colors">
+                <h3 className="text-white font-semibold group-hover:text-truth-green transition-colors serif-text">
                   {bill.title}
                 </h3>
                 <p className="text-sm text-gray-400 mt-1">{bill.sponsor}</p>
