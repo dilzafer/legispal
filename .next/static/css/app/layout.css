@@ -505,7 +505,7 @@ video {
   :root {
     --foreground-rgb: 0, 0, 0;
     --background-start-rgb: 255, 255, 255;
-    --background-end-rgb: 255, 255, 255;
+    --background-end-rgb: 107, 114, 128;
   }
 
   @media (prefers-color-scheme: dark) {
@@ -955,6 +955,10 @@ video {
 }
 .bg-yellow-400\/10 {
   background-color: rgb(250 204 21 / 0.1);
+}
+.bg-slate-800 {
+  --tw-bg-opacity: 1;
+  background-color: rgb(30 41 59 / var(--tw-bg-opacity, 1));
 }
 .bg-gradient-to-l {
   background-image: linear-gradient(to left, var(--tw-gradient-stops));
