@@ -4,7 +4,7 @@ import { motion } from 'framer-motion'
 import { useState } from 'react'
 import { Bookmark, Share2, GitCompare, Bell, UserCircle2, AlertTriangle, X } from 'lucide-react'
 
-interface BillData {
+export interface BillData {
   id: string
   title: string
   billNumber: string
@@ -381,11 +381,11 @@ export default function BillDashboard({ billData, isOpen, onClose }: BillDashboa
                         strokeLinecap="round" 
                       />
                     </svg>
-                    <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-2xl font-bold">
+                    <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-2xl font-bold text-white">
                       {billData.truthScore}
                     </div>
                   </div>
-                  <p className="text-lg font-semibold mt-2">Truth Score</p>
+                  <p className="text-lg font-semibold mt-2 text-white">Truth Score</p>
                 </div>
 
                 <div className="space-y-4 text-sm">
@@ -437,7 +437,7 @@ export default function BillDashboard({ billData, isOpen, onClose }: BillDashboa
 
               <div className="bg-gray-800/50 p-4 rounded-lg border border-gray-700">
                 <div className="mb-4">
-                  <h3 className="font-bold text-center">Partisan Support for {billData.billNumber}</h3>
+                  <h3 className="font-bold text-center text-white">Partisan Support for {billData.billNumber}</h3>
                 </div>
                 
                 <div className="py-2">
@@ -465,7 +465,7 @@ export default function BillDashboard({ billData, isOpen, onClose }: BillDashboa
               
               <div className="mt-6 flex flex-wrap items-center justify-center md:justify-start gap-x-8 gap-y-4 text-center border-t border-gray-700 pt-6">
                 <div>
-                  <p className="text-2xl font-bold">{billData.publicSentiment.comments.toLocaleString()}</p>
+                  <p className="text-2xl font-bold text-white">{billData.publicSentiment.comments.toLocaleString()}</p>
                   <p className="text-xs text-gray-400 uppercase tracking-wider">Comments</p>
                 </div>
                 <div>

@@ -1,8 +1,10 @@
 'use client'
 
 import { motion } from 'framer-motion'
-import { Zap, ThumbsDown, ThumbsUp, MessageCircle } from 'lucide-react'
+import { Zap, ThumbsDown, ThumbsUp, MessageCircle, AlertTriangle } from 'lucide-react'
 import { useBillDashboard } from '@/lib/useBillDashboard'
+import { useState, useEffect } from 'react'
+import { getPolarizingBills } from '@/lib/services/billService'
 
 interface PolarizingBill {
   id: string
@@ -13,44 +15,45 @@ interface PolarizingBill {
   comments: number
 }
 
-const mockPolarizingBills: PolarizingBill[] = [
-  {
-    id: 'HR-2024',
-    title: 'Federal Abortion Rights Protection Act',
-    democratSupport: 85,
-    republicanSupport: 15,
-    debatePoints: {
-      left: 'Protects fundamental healthcare rights and bodily autonomy for all Americans',
-      right: 'Represents federal overreach into state healthcare decisions and religious beliefs'
-    },
-    comments: 15234
-  },
-  {
-    id: 'S-3041',
-    title: 'Border Security Enhancement Act',
-    democratSupport: 25,
-    republicanSupport: 75,
-    debatePoints: {
-      left: 'Humanitarian concerns ignored and could harm border communities',
-      right: 'Essential for national security and controlling illegal immigration'
-    },
-    comments: 8921
-  },
-  {
-    id: 'HR-5555',
-    title: 'Universal Background Check Act',
-    democratSupport: 87,
-    republicanSupport: 13,
-    debatePoints: {
-      left: 'Common-sense gun safety measure that will save lives',
-      right: 'Infringes on Second Amendment rights and won\'t prevent crime'
-    },
-    comments: 12456
-  }
-]
-
 export default function PolarizingBills() {
   const { openBillDashboard } = useBillDashboard()
+  const [bills, setBills] = useState<PolarizingBill[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    async function loadPolarizingBills() {
+      try {
+        setLoading(true)
+        const polarizingBills = await getPolarizingBills(3)
+
+        // Transform to expected format
+        const transformedBills: PolarizingBill[] = polarizingBills
+          .filter(bill => bill.id && bill.title && bill.publicSentiment)
+          .map(bill => ({
+            id: bill.id!,
+            title: bill.title!,
+            democratSupport: bill.publicSentiment!.democratSupport,
+            republicanSupport: bill.publicSentiment!.republicanSupport,
+            debatePoints: {
+              left: bill.publicSentiment!.argumentsFor,
+              right: bill.publicSentiment!.argumentsAgainst
+            },
+            comments: bill.publicSentiment!.comments || 0
+          }))
+
+        setBills(transformedBills)
+        setError(null)
+      } catch (err) {
+        console.error('Error loading polarizing bills:', err)
+        setError('Failed to load polarizing bills')
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    loadPolarizingBills()
+  }, [])
   const PartisanMeter = ({ bill }: { bill: PolarizingBill }) => {
     const totalWidth = 300
     const demWidth = (bill.democratSupport / 100) * totalWidth
@@ -62,7 +65,7 @@ export default function PolarizingBills() {
           <span className="text-xs text-blue-400">Dems {bill.democratSupport}%</span>
           <span className="text-xs text-red-400">GOP {bill.republicanSupport}%</span>
         </div>
-        
+
         <div className="relative h-8 rounded-full overflow-hidden flex w-full">
           <motion.div
             className="h-full bg-gradient-to-r from-blue-500 to-blue-400"
@@ -70,14 +73,14 @@ export default function PolarizingBills() {
             animate={{ width: `${bill.democratSupport}%` }}
             transition={{ duration: 0.8, delay: 0.2 }}
           />
-          
+
           <motion.div
             className="h-full bg-gradient-to-r from-red-400 to-red-500"
             initial={{ width: 0 }}
             animate={{ width: `${bill.republicanSupport}%` }}
             transition={{ duration: 0.8, delay: 0.4 }}
           />
-          
+
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
             <Zap className="text-white/80" size={16} />
           </div>
@@ -86,8 +89,64 @@ export default function PolarizingBills() {
     )
   }
 
+  if (loading) {
+    return (
+      <motion.div
+        className="bg-slate-900/50 rounded-2xl p-6 backdrop-blur-sm border border-white/10"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.3 }}
+      >
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-red-500/20 rounded-lg">
+              <Zap className="text-red-500" size={24} />
+            </div>
+            <div>
+              <h2 className="text-xl font-bold text-white">Polarizing Bills</h2>
+              <p className="text-sm text-gray-400">Highest partisan divide</p>
+            </div>
+          </div>
+        </div>
+        <div className="space-y-6">
+          {[...Array(3)].map((_, i) => (
+            <div key={i} className="bg-slate-800/50 rounded-xl p-5 animate-pulse">
+              <div className="h-6 bg-white/10 rounded mb-4 w-3/4"></div>
+              <div className="h-8 bg-white/10 rounded mb-4"></div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="h-20 bg-white/10 rounded"></div>
+                <div className="h-20 bg-white/10 rounded"></div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </motion.div>
+    )
+  }
+
+  if (error) {
+    return (
+      <motion.div
+        className="bg-slate-900/50 rounded-2xl p-6 backdrop-blur-sm border border-white/10"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.3 }}
+      >
+        <div className="flex items-center gap-3 mb-4">
+          <div className="p-2 bg-red-500/20 rounded-lg">
+            <AlertTriangle className="text-red-500" size={24} />
+          </div>
+          <div>
+            <h2 className="text-xl font-bold text-white">Polarizing Bills</h2>
+            <p className="text-sm text-red-400">{error}</p>
+          </div>
+        </div>
+      </motion.div>
+    )
+  }
+
   return (
-    <motion.div 
+    <motion.div
       className="bg-slate-900/50 rounded-2xl p-6 backdrop-blur-sm border border-white/10"
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
@@ -106,7 +165,7 @@ export default function PolarizingBills() {
       </div>
 
       <div className="space-y-6">
-        {mockPolarizingBills.map((bill, index) => (
+        {bills.map((bill, index) => (
           <motion.div
             key={bill.id}
             initial={{ opacity: 0, scale: 0.95 }}

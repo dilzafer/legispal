@@ -6,9 +6,9 @@ import { mockBillData } from '@/lib/mockBillData'
 import { useBillDashboard } from '@/lib/useBillDashboard'
 
 export default function BillDashboardScan() {
-  const { selectedBillId, closeBillDashboard } = useBillDashboard()
-  
-  const billData = selectedBillId ? mockBillData[selectedBillId] : null
+  const { selectedBillId, selectedBillData, loading, closeBillDashboard } = useBillDashboard()
+
+  const billData = selectedBillData || (selectedBillId ? mockBillData[selectedBillId] : null)
 
 
   const SwingVotes = () => (
@@ -102,7 +102,7 @@ export default function BillDashboardScan() {
 
   return (
     <AnimatePresence>
-      {billData && (
+      {selectedBillId && (
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -118,6 +118,19 @@ export default function BillDashboardScan() {
             className="bg-slate-900 rounded-2xl w-full max-w-7xl max-h-[95vh] overflow-y-auto shadow-2xl border border-white/10"
             onClick={(e) => e.stopPropagation()}
           >
+            {/* Loading State */}
+            {loading && !billData && (
+              <div className="flex items-center justify-center p-20">
+                <div className="text-center">
+                  <div className="inline-block h-12 w-12 animate-spin rounded-full border-4 border-solid border-truth-green border-r-transparent mb-4"></div>
+                  <p className="text-gray-400">Loading bill data...</p>
+                </div>
+              </div>
+            )}
+
+            {/* Actual Content */}
+            {billData && (
+              <>
             {/* Header */}
             <header className="sticky top-0 z-10 bg-slate-900 bg-opacity-95 backdrop-blur-sm border-b border-gray-800">
               <div className="flex items-center justify-between p-6">
@@ -154,7 +167,7 @@ export default function BillDashboardScan() {
                   <span className="text-gray-400">{billData.billNumber}</span> — {billData.title}
                 </h1>
                 <div className="flex flex-wrap items-center gap-2 text-xs mb-6">
-                  {billData.categories.map((category, index) => (
+                  {billData.categories.map((category: string, index: number) => (
                     <span key={index} className="bg-gray-700 text-gray-300 px-2 py-1 rounded-full">
                       {category}
                     </span>
@@ -255,7 +268,7 @@ export default function BillDashboardScan() {
                       <div className="md:col-span-1 flex flex-col items-center">
                         <h3 className="font-semibold text-gray-300 mb-2 text-center">Funding Sources</h3>
                         <svg className="w-40 h-40" viewBox="0 0 100 100">
-                          {billData.moneyMap.sources.map((source, index) => {
+                          {billData.moneyMap.sources.map((source: { name: string; percentage: number; color: string }, index: number) => {
                             // Calculate angles based on percentage
                             let startAngle = 0
                             for (let i = 0; i < index; i++) {
@@ -295,7 +308,7 @@ export default function BillDashboardScan() {
                           })}
                         </svg>
                         <div className="mt-4 space-y-1 text-xs text-gray-400">
-                          {billData.moneyMap.sources.map((source, index) => (
+                          {billData.moneyMap.sources.map((source: { name: string; percentage: number; color: string }, index: number) => (
                             <div key={index} className="flex items-center">
                               <span className={`w-3 h-3 mr-2 rounded-full`} style={{ backgroundColor: source.color }}></span>
                               {source.name} ({source.percentage}%)
@@ -365,7 +378,7 @@ export default function BillDashboardScan() {
                       <div>
                         <h3 className="font-semibold text-gray-300 mb-2">Key Provisions</h3>
                         <ul className="space-y-1 text-gray-400 list-disc list-inside">
-                          {billData.keyProvisions.map((provision, index) => (
+                          {billData.keyProvisions.map((provision: string, index: number) => (
                             <li key={index}>{provision}</li>
                           ))}
                         </ul>
@@ -376,7 +389,7 @@ export default function BillDashboardScan() {
                           Hidden Implications
                         </h3>
                         <ul className="space-y-1 text-gray-400 list-disc list-inside">
-                          {billData.hiddenImplications.map((implication, index) => (
+                          {billData.hiddenImplications.map((implication: string, index: number) => (
                             <li key={index}>{implication}</li>
                           ))}
                         </ul>
@@ -384,7 +397,7 @@ export default function BillDashboardScan() {
                       <div>
                         <h3 className="font-semibold text-gray-300 mb-2">Fact Check Analysis</h3>
                         <div className="space-y-2">
-                          {billData.factCheck.map((check, index) => (
+                          {billData.factCheck.map((check: { label: string; percentage: number; color: string }, index: number) => (
                             <div key={index}>
                               <div className="w-full bg-gray-700 rounded-full h-1.5">
                                 <div 
@@ -470,11 +483,11 @@ export default function BillDashboardScan() {
                     <div className="w-full">
                       <svg width="100%" height="200" className="text-xs text-gray-400">
                         <g className="bars" fill="#10b981">
-                          {billData.lobbyingActivity.monthlyData.map((data, index) => {
+                          {billData.lobbyingActivity.monthlyData.map((data: { month: string; amount: string }, index: number) => {
                             // Extract numeric value and scale it properly
                             const numericValue = parseInt(data.amount.replace(/[^\d]/g, ''))
                             // Scale to use most of the available height (max 160px)
-                            const maxValue = Math.max(...billData.lobbyingActivity.monthlyData.map(d => parseInt(d.amount.replace(/[^\d]/g, ''))))
+                            const maxValue = Math.max(...billData.lobbyingActivity.monthlyData.map((d: { month: string; amount: string }) => parseInt(d.amount.replace(/[^\d]/g, ''))))
                             const height = (numericValue / maxValue) * 160
                             const barWidth = 12 // Increased from 10%
                             const barSpacing = 8 // Space between bars
@@ -494,9 +507,9 @@ export default function BillDashboardScan() {
                           })}
                         </g>
                         <g className="labels-money" fill="#f9fafb" textAnchor="middle" fontSize="11px" fontWeight="bold">
-                          {billData.lobbyingActivity.monthlyData.map((data, index) => {
+                          {billData.lobbyingActivity.monthlyData.map((data: { month: string; amount: string }, index: number) => {
                             const numericValue = parseInt(data.amount.replace(/[^\d]/g, ''))
-                            const maxValue = Math.max(...billData.lobbyingActivity.monthlyData.map(d => parseInt(d.amount.replace(/[^\d]/g, ''))))
+                            const maxValue = Math.max(...billData.lobbyingActivity.monthlyData.map((d: { month: string; amount: string }) => parseInt(d.amount.replace(/[^\d]/g, ''))))
                             const height = (numericValue / maxValue) * 160
                             const barWidth = 12
                             const barSpacing = 8
@@ -508,7 +521,7 @@ export default function BillDashboardScan() {
                           })}
                         </g>
                         <g className="labels-month" fill="#9ca3af" textAnchor="middle" fontSize="10px">
-                          {billData.lobbyingActivity.monthlyData.map((data, index) => {
+                          {billData.lobbyingActivity.monthlyData.map((data: { month: string; amount: string }, index: number) => {
                             const barWidth = 12
                             const barSpacing = 8
                             const xPosition = 5 + index * (barWidth + barSpacing)
@@ -524,7 +537,7 @@ export default function BillDashboardScan() {
                   <div className="mt-4 border-t border-gray-700 pt-4">
                     <h3 className="font-semibold text-gray-300 mb-2">Top Lobbyist Entities</h3>
                     <div className="flex flex-wrap gap-2 text-xs">
-                      {billData.lobbyingActivity.topEntities.map((entity, index) => (
+                      {billData.lobbyingActivity.topEntities.map((entity: { name: string; amount: string; filings: number }, index: number) => (
                         <span key={index} className="bg-gray-700 text-gray-300 px-2 py-1 rounded-full">
                           {entity.name} | {entity.amount} | {entity.filings} filings
                         </span>
@@ -545,7 +558,7 @@ export default function BillDashboardScan() {
                     <div>
                       <h3 className="font-semibold text-green-400 mb-2 border-b border-green-800 pb-1">WHO BENEFITS</h3>
                       <ul className="space-y-1 text-gray-300 list-disc list-inside">
-                        {billData.impact.beneficiaries.map((beneficiary, index) => (
+                        {billData.impact.beneficiaries.map((beneficiary: string, index: number) => (
                           <li key={index}>{beneficiary}</li>
                         ))}
                       </ul>
@@ -553,7 +566,7 @@ export default function BillDashboardScan() {
                     <div>
                       <h3 className="font-semibold text-red-400 mb-2 border-b border-red-800 pb-1">WHO PAYS</h3>
                       <ul className="space-y-1 text-gray-300 list-disc list-inside">
-                        {billData.impact.payers.map((payer, index) => (
+                        {billData.impact.payers.map((payer: string, index: number) => (
                           <li key={index}>{payer}</li>
                         ))}
                       </ul>
@@ -571,7 +584,7 @@ export default function BillDashboardScan() {
                           </tr>
                         </thead>
                         <tbody className="text-gray-300">
-                          {billData.impact.districtImpact.map((district, index) => (
+                          {billData.impact.districtImpact.map((district: { district: string; jobGrowth: string; funding: string }, index: number) => (
                             <tr key={index} className={index < billData.impact.districtImpact.length - 1 ? 'border-b border-gray-700' : ''}>
                               <td className="p-2">{district.district}</td>
                               <td className="p-2">{district.jobGrowth}</td>
@@ -585,6 +598,8 @@ export default function BillDashboardScan() {
                 </section>
               </div>
             </main>
+            </>
+            )}
           </motion.div>
         </motion.div>
       )}

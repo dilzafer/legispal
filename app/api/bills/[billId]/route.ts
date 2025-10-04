@@ -3,11 +3,13 @@ import { openStatesService } from '@/backend/services/openstates';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { billId: string } }
+  { params }: { params: Promise<{ billId: string }> }
 ) {
   try {
+    // Await params in Next.js 15+
+    const { billId: rawBillId } = await params
     // Decode the bill ID in case it was URL encoded
-    const billId = decodeURIComponent(params.billId);
+    const billId = decodeURIComponent(rawBillId);
 
     // Check if it's an OCD ID format
     if (billId.startsWith('ocd-bill/')) {

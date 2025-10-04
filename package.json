@@ -1,5 +1,5 @@
 {
-  "name": "legispal",
+  "name": "oversightusa",
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
@@ -10,16 +10,16 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/dilzafer/legispal.git"
+    "url": "git+https://github.com/dilzafer/oversightusa.git"
   },
-  "keywords": [],
+  "keywords": ["legislative", "tracking", "democracy", "bills", "congress"],
   "author": "",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/dilzafer/legispal/issues"
+    "url": "https://github.com/dilzafer/oversightusa/issues"
   },
-  "homepage": "https://github.com/dilzafer/legispal#readme",
-  "description": "",
+  "homepage": "https://github.com/dilzafer/oversightusa#readme",
+  "description": "Real-time legislative tracking and transparency platform",
   "dependencies": {
     "@tailwindcss/postcss": "^4.1.14",
     "@types/d3": "^7.4.3",

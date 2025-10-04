@@ -3,6 +3,8 @@
 import { motion } from 'framer-motion'
 import { TrendingUp, Users, Calendar, AlertTriangle, ChevronRight } from 'lucide-react'
 import { useBillDashboard } from '@/lib/useBillDashboard'
+import { useState, useEffect } from 'react'
+import { getTrendingBills } from '@/lib/services/billService'
 
 interface Bill {
   id: string
@@ -17,47 +19,48 @@ interface Bill {
   controversyLevel: 'low' | 'medium' | 'high'
 }
 
-const mockBills: Bill[] = [
-  {
-    id: 'HR-2024',
-    title: 'Federal Abortion Rights Protection Act',
-    sponsor: 'Rep. Anna Davis (D-CA)',
-    date: '2024-10-01',
-    trendScore: 87,
-    summary: 'This bill creates comprehensive protections for abortion rights at the federal level, establishing a national standard that supersedes state restrictions.',
-    tags: ['Healthcare', 'Rights', 'Federal'],
-    supportersCount: 8934,
-    opposersCount: 6300,
-    controversyLevel: 'high'
-  },
-  {
-    id: 'S-3041',
-    title: 'Border Security Enhancement Act',
-    sponsor: 'Sen. Michael Johnson (R-TX)',
-    date: '2024-09-28',
-    trendScore: 92,
-    summary: 'This bill increases border security funding and establishes new immigration enforcement measures at the southern border.',
-    tags: ['Immigration', 'Security', 'Border'],
-    supportersCount: 2234,
-    opposersCount: 6687,
-    controversyLevel: 'medium'
-  },
-  {
-    id: 'HR-5555',
-    title: 'Universal Background Check Act',
-    sponsor: 'Rep. Sarah Martinez (D-CO)',
-    date: '2024-09-25',
-    trendScore: 78,
-    summary: 'This bill expands background check requirements to cover all firearm sales, including private transactions and gun shows.',
-    tags: ['Gun Control', 'Safety', 'Background Checks'],
-    supportersCount: 8923,
-    opposersCount: 3533,
-    controversyLevel: 'high'
-  }
-]
-
 export default function TrendingBills() {
   const { openBillDashboard } = useBillDashboard()
+  const [bills, setBills] = useState<Bill[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    async function loadTrendingBills() {
+      try {
+        setLoading(true)
+        const trendingBills = await getTrendingBills(5)
+
+        // Transform to expected format
+        const transformedBills: Bill[] = trendingBills
+          .filter(bill => bill.id && bill.title)
+          .map(bill => ({
+            id: bill.id!,
+            title: bill.title!,
+            sponsor: bill.sponsor || 'Unknown',
+            date: new Date().toISOString().split('T')[0],
+            trendScore: bill.trendScore || 50,
+            summary: bill.description || bill.title || '',
+            tags: bill.categories || [],
+            supportersCount: bill.publicSentiment?.support || 0,
+            opposersCount: bill.publicSentiment?.oppose || 0,
+            controversyLevel: (bill.controversy?.includes('high') ? 'high' :
+                             bill.controversy?.includes('medium') ? 'medium' : 'low') as 'low' | 'medium' | 'high'
+          }))
+
+        setBills(transformedBills)
+        setError(null)
+      } catch (err) {
+        console.error('Error loading trending bills:', err)
+        setError('Failed to load trending bills')
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    loadTrendingBills()
+  }, [])
+
   const getControversyColor = (level: string) => {
     switch (level) {
       case 'low': return 'text-green-400 bg-green-400/10'
@@ -65,6 +68,59 @@ export default function TrendingBills() {
       case 'high': return 'text-red-400 bg-red-400/10'
       default: return 'text-gray-400 bg-gray-400/10'
     }
+  }
+
+  if (loading) {
+    return (
+      <motion.div
+        className="bg-slate-900/50 rounded-2xl p-6 backdrop-blur-sm border border-white/10"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.2 }}
+      >
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-democracy-gold/20 rounded-lg">
+              <TrendingUp className="text-democracy-gold" size={24} />
+            </div>
+            <div>
+              <h2 className="text-xl font-bold text-white">Trending Bills</h2>
+              <p className="text-sm text-gray-400">Most discussed legislation this week</p>
+            </div>
+          </div>
+        </div>
+        <div className="space-y-4">
+          {[...Array(3)].map((_, i) => (
+            <div key={i} className="bg-slate-800/50 rounded-xl p-4 animate-pulse">
+              <div className="h-6 bg-white/10 rounded mb-2 w-3/4"></div>
+              <div className="h-4 bg-white/10 rounded mb-2 w-1/2"></div>
+              <div className="h-4 bg-white/10 rounded w-full"></div>
+            </div>
+          ))}
+        </div>
+      </motion.div>
+    )
+  }
+
+  if (error) {
+    return (
+      <motion.div
+        className="bg-slate-900/50 rounded-2xl p-6 backdrop-blur-sm border border-white/10"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.2 }}
+      >
+        <div className="flex items-center gap-3 mb-4">
+          <div className="p-2 bg-red-500/20 rounded-lg">
+            <AlertTriangle className="text-red-500" size={24} />
+          </div>
+          <div>
+            <h2 className="text-xl font-bold text-white">Trending Bills</h2>
+            <p className="text-sm text-red-400">{error}</p>
+          </div>
+        </div>
+      </motion.div>
+    )
   }
 
   return (
@@ -92,7 +148,7 @@ export default function TrendingBills() {
       </div>
 
       <div className="space-y-4">
-        {mockBills.map((bill, index) => (
+        {bills.map((bill, index) => (
           <motion.div
             key={bill.id}
             initial={{ opacity: 0, x: -20 }}
