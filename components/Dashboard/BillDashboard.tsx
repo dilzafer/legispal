@@ -135,7 +135,7 @@ export default function BillDashboard({ billData, isOpen, onClose }: BillDashboa
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-[9999] bg-black/70 backdrop-blur-md flex items-center justify-center p-4"
+      className="fixed inset-0 z-[9999] bg-transparent flex items-start justify-center p-0"
       onClick={onClose}
     >
       <motion.div
@@ -143,11 +143,11 @@ export default function BillDashboard({ billData, isOpen, onClose }: BillDashboa
         animate={{ scale: 1, opacity: 1, y: 0 }}
         exit={{ scale: 0.95, opacity: 0, y: 20 }}
         transition={{ type: "spring", damping: 25, stiffness: 300 }}
-        className="bg-slate-900 rounded-2xl w-full max-w-7xl max-h-[95vh] overflow-y-auto shadow-2xl border border-white/10"
+        className="bg-slate-900/30 backdrop-blur-xl w-full max-w-7xl h-screen overflow-y-auto shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <header className="sticky top-0 z-10 bg-slate-900 bg-opacity-95 backdrop-blur-sm border-b border-gray-800 p-4">
+        <header className="sticky top-0 z-10 bg-slate-900/30 backdrop-blur-xl border-b border-gray-800 p-4">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
             {/* Status Pill */}
             <div className="w-full md:w-auto md:flex-grow flex justify-center order-1 md:order-none">
