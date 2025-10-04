@@ -367,11 +367,11 @@ export default function BillDashboardScan() {
                             strokeLinecap="round" 
                           />
                         </svg>
-                        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-2xl font-bold">
+                        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-2xl font-bold text-white">
                           {billData.truthScore}
                         </div>
                       </div>
-                      <p className="text-lg font-semibold mt-2">Truth Score</p>
+                      <p className="text-lg font-semibold mt-2 text-white">Truth Score</p>
                     </div>
 
                     <div className="space-y-4 text-sm">
@@ -423,7 +423,7 @@ export default function BillDashboardScan() {
 
                   <div className="bg-gray-800/50 p-4 rounded-lg border border-gray-700">
                     <div className="mb-4">
-                      <h3 className="font-bold text-center">Partisan Support for {billData.billNumber}</h3>
+                      <h3 className="font-bold text-center text-white">Partisan Support for {billData.billNumber}</h3>
                     </div>
                     
                     <div className="py-2">
