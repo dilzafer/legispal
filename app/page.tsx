@@ -7,6 +7,8 @@ import TrendingBills from '@/components/Dashboard/TrendingBills'
 import PolarizingBills from '@/components/Dashboard/PolarizingBills'
 import BillAnalysis from '@/components/AI/BillAnalysis'
 import MoneyFlow from '@/components/Visualizations/MoneyFlow'
+import InTheNews from '@/components/Dashboard/InTheNews'
+import { CONFIG } from '@/lib/config'
 
 export default function Dashboard() {
   return (
@@ -27,6 +29,8 @@ export default function Dashboard() {
           <USMapInteractive />
         </div>
       </div>
+
+      <InTheNews apiKey={CONFIG.NEWS_API_KEY} />
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <TrendingBills />
