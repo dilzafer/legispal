@@ -2,13 +2,13 @@
 
 import { motion } from 'framer-motion'
 import { Zap, ThumbsDown, ThumbsUp, MessageCircle } from 'lucide-react'
+import { useBillDashboard } from '@/lib/useBillDashboard'
 
 interface PolarizingBill {
   id: string
   title: string
   democratSupport: number
   republicanSupport: number
-  independentSupport: number
   debatePoints: { left: string; right: string }
   comments: number
 }
@@ -17,24 +17,22 @@ const mockPolarizingBills: PolarizingBill[] = [
   {
     id: 'HR-2024',
     title: 'Federal Abortion Rights Protection Act',
-    democratSupport: 94,
-    republicanSupport: 12,
-    independentSupport: 52,
+    democratSupport: 85,
+    republicanSupport: 15,
     debatePoints: {
-      left: 'Protects fundamental healthcare rights',
-      right: 'Overreaches federal authority'
+      left: 'Protects fundamental healthcare rights and bodily autonomy for all Americans',
+      right: 'Represents federal overreach into state healthcare decisions and religious beliefs'
     },
     comments: 15234
   },
   {
     id: 'S-3041',
     title: 'Border Security Enhancement Act',
-    democratSupport: 23,
-    republicanSupport: 91,
-    independentSupport: 48,
+    democratSupport: 25,
+    republicanSupport: 75,
     debatePoints: {
-      left: 'Humanitarian concerns ignored',
-      right: 'Essential for national security'
+      left: 'Humanitarian concerns ignored and could harm border communities',
+      right: 'Essential for national security and controlling illegal immigration'
     },
     comments: 8921
   },
@@ -42,54 +40,45 @@ const mockPolarizingBills: PolarizingBill[] = [
     id: 'HR-5555',
     title: 'Universal Background Check Act',
     democratSupport: 87,
-    republicanSupport: 31,
-    independentSupport: 68,
+    republicanSupport: 13,
     debatePoints: {
-      left: 'Common-sense gun safety measure',
-      right: 'Infringes on Second Amendment'
+      left: 'Common-sense gun safety measure that will save lives',
+      right: 'Infringes on Second Amendment rights and won\'t prevent crime'
     },
     comments: 12456
   }
 ]
 
 export default function PolarizingBills() {
+  const { openBillDashboard } = useBillDashboard()
   const PartisanMeter = ({ bill }: { bill: PolarizingBill }) => {
     const totalWidth = 300
-    const demWidth = (bill.democratSupport / 100) * (totalWidth * 0.45)
-    const repWidth = (bill.republicanSupport / 100) * (totalWidth * 0.45)
-    const indWidth = (bill.independentSupport / 100) * (totalWidth * 0.1)
+    const demWidth = (bill.democratSupport / 100) * totalWidth
+    const repWidth = (bill.republicanSupport / 100) * totalWidth
 
     return (
       <div className="relative">
         <div className="flex items-center justify-between mb-2">
           <span className="text-xs text-blue-400">Dems {bill.democratSupport}%</span>
-          <span className="text-xs text-purple-400">Ind {bill.independentSupport}%</span>
           <span className="text-xs text-red-400">GOP {bill.republicanSupport}%</span>
         </div>
         
-        <div className="relative h-8 bg-slate-700 rounded-full overflow-hidden">
+        <div className="relative h-8 rounded-full overflow-hidden flex w-full">
           <motion.div
-            className="absolute left-0 top-0 h-full bg-gradient-to-r from-blue-500 to-blue-400"
+            className="h-full bg-gradient-to-r from-blue-500 to-blue-400"
             initial={{ width: 0 }}
-            animate={{ width: demWidth }}
+            animate={{ width: `${bill.democratSupport}%` }}
             transition={{ duration: 0.8, delay: 0.2 }}
           />
           
           <motion.div
-            className="absolute right-0 top-0 h-full bg-gradient-to-l from-red-500 to-red-400"
+            className="h-full bg-gradient-to-r from-red-400 to-red-500"
             initial={{ width: 0 }}
-            animate={{ width: repWidth }}
+            animate={{ width: `${bill.republicanSupport}%` }}
             transition={{ duration: 0.8, delay: 0.4 }}
           />
           
-          <motion.div
-            className="absolute left-1/2 top-0 h-full bg-purple-500 -translate-x-1/2"
-            initial={{ width: 0 }}
-            animate={{ width: indWidth }}
-            transition={{ duration: 0.8, delay: 0.6 }}
-          />
-          
-          <div className="absolute inset-0 flex items-center justify-center">
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
             <Zap className="text-white/80" size={16} />
           </div>
         </div>
@@ -123,7 +112,8 @@ export default function PolarizingBills() {
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: index * 0.1 }}
-            className="bg-gradient-to-r from-slate-800/50 via-slate-800/30 to-slate-800/50 rounded-xl p-5 border border-white/5"
+            className="bg-gradient-to-r from-slate-800/50 via-slate-800/30 to-slate-800/50 rounded-xl p-5 border border-white/5 cursor-pointer hover:bg-gradient-to-r hover:from-slate-800/70 hover:via-slate-800/50 hover:to-slate-800/70 transition-all duration-200"
+            onClick={() => openBillDashboard(bill.id)}
           >
             <div className="mb-4">
               <span className="text-xs font-mono text-gray-500">{bill.id}</span>

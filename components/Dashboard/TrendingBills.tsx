@@ -2,6 +2,7 @@
 
 import { motion } from 'framer-motion'
 import { TrendingUp, Users, Calendar, AlertTriangle, ChevronRight } from 'lucide-react'
+import { useBillDashboard } from '@/lib/useBillDashboard'
 
 interface Bill {
   id: string
@@ -18,44 +19,45 @@ interface Bill {
 
 const mockBills: Bill[] = [
   {
-    id: 'HR-1234',
-    title: 'Clean Energy Investment Act of 2024',
-    sponsor: 'Rep. Sarah Johnson (D-CA)',
+    id: 'HR-2024',
+    title: 'Federal Abortion Rights Protection Act',
+    sponsor: 'Rep. Anna Davis (D-CA)',
     date: '2024-10-01',
+    trendScore: 87,
+    summary: 'This bill creates comprehensive protections for abortion rights at the federal level, establishing a national standard that supersedes state restrictions.',
+    tags: ['Healthcare', 'Rights', 'Federal'],
+    supportersCount: 8934,
+    opposersCount: 6300,
+    controversyLevel: 'high'
+  },
+  {
+    id: 'S-3041',
+    title: 'Border Security Enhancement Act',
+    sponsor: 'Sen. Michael Johnson (R-TX)',
+    date: '2024-09-28',
     trendScore: 92,
-    summary: 'Allocates $50B for renewable energy infrastructure and creates tax incentives for solar adoption',
-    tags: ['Climate', 'Energy', 'Infrastructure'],
-    supportersCount: 2340,
-    opposersCount: 1120,
+    summary: 'This bill increases border security funding and establishes new immigration enforcement measures at the southern border.',
+    tags: ['Immigration', 'Security', 'Border'],
+    supportersCount: 2234,
+    opposersCount: 6687,
     controversyLevel: 'medium'
   },
   {
-    id: 'S-5678',
-    title: 'Digital Privacy Protection Act',
-    sponsor: 'Sen. Michael Chen (D-NY)',
-    date: '2024-09-28',
-    trendScore: 88,
-    summary: 'Establishes comprehensive data protection standards for tech companies',
-    tags: ['Privacy', 'Technology', 'Consumer Rights'],
-    supportersCount: 3450,
-    opposersCount: 890,
-    controversyLevel: 'low'
-  },
-  {
-    id: 'HR-9101',
-    title: 'Healthcare Access Expansion Act',
-    sponsor: 'Rep. James Wilson (R-TX)',
+    id: 'HR-5555',
+    title: 'Universal Background Check Act',
+    sponsor: 'Rep. Sarah Martinez (D-CO)',
     date: '2024-09-25',
-    trendScore: 85,
-    summary: 'Expands Medicare coverage and reduces prescription drug costs',
-    tags: ['Healthcare', 'Medicare', 'Pharmaceuticals'],
-    supportersCount: 1890,
-    opposersCount: 2100,
+    trendScore: 78,
+    summary: 'This bill expands background check requirements to cover all firearm sales, including private transactions and gun shows.',
+    tags: ['Gun Control', 'Safety', 'Background Checks'],
+    supportersCount: 8923,
+    opposersCount: 3533,
     controversyLevel: 'high'
   }
 ]
 
 export default function TrendingBills() {
+  const { openBillDashboard } = useBillDashboard()
   const getControversyColor = (level: string) => {
     switch (level) {
       case 'low': return 'text-green-400 bg-green-400/10'
@@ -97,6 +99,7 @@ export default function TrendingBills() {
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: index * 0.1 }}
             className="bg-slate-800/50 rounded-xl p-4 hover:bg-slate-800/70 transition-all cursor-pointer group"
+            onClick={() => openBillDashboard(bill.id)}
           >
             <div className="flex items-start justify-between mb-3">
               <div className="flex-1">

@@ -38,20 +38,21 @@ export default function USMapInteractive() {
       .attr('viewBox', `0 0 ${width} ${height}`)
       .attr('class', 'w-full h-full')
 
-    // Create simplified US states representation
+
+    // Create state positions accurately placed on the USA map
     const states = [
-      { id: 'CA', x: 50, y: 200, label: 'CA' },
-      { id: 'TX', x: 400, y: 350, label: 'TX' },
-      { id: 'NY', x: 700, y: 150, label: 'NY' },
-      { id: 'FL', x: 650, y: 400, label: 'FL' },
-      { id: 'WA', x: 80, y: 80, label: 'WA' },
-      { id: 'IL', x: 550, y: 200, label: 'IL' },
-      { id: 'PA', x: 680, y: 180, label: 'PA' },
-      { id: 'AZ', x: 200, y: 320, label: 'AZ' },
-      { id: 'GA', x: 620, y: 330, label: 'GA' },
-      { id: 'MI', x: 580, y: 160, label: 'MI' },
-      { id: 'CO', x: 350, y: 250, label: 'CO' },
-      { id: 'OH', x: 620, y: 200, label: 'OH' },
+      { id: 'CA', x: 120, y: 280, label: 'CA' }, // California - West Coast
+      { id: 'TX', x: 420, y: 420, label: 'TX' }, // Texas - South Central
+      { id: 'NY', x: 680, y: 180, label: 'NY' }, // New York - Northeast
+      { id: 'FL', x: 650, y: 450, label: 'FL' }, // Florida - Southeast
+      { id: 'WA', x: 180, y: 120, label: 'WA' }, // Washington - Pacific Northwest
+      { id: 'IL', x: 520, y: 240, label: 'IL' }, // Illinois - Midwest
+      { id: 'PA', x: 620, y: 200, label: 'PA' }, // Pennsylvania - Northeast
+      { id: 'AZ', x: 280, y: 360, label: 'AZ' }, // Arizona - Southwest
+      { id: 'GA', x: 600, y: 380, label: 'GA' }, // Georgia - Southeast
+      { id: 'MI', x: 560, y: 180, label: 'MI' }, // Michigan - Great Lakes
+      { id: 'CO', x: 380, y: 280, label: 'CO' }, // Colorado - Mountain West
+      { id: 'OH', x: 580, y: 220, label: 'OH' }, // Ohio - Midwest
     ]
 
     // Add glow effect
