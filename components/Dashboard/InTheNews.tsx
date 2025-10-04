@@ -145,7 +145,7 @@ export default function InTheNews({ apiKey }: InTheNewsProps) {
         </div>
       </div>
 
-      <div className="space-y-4">
+      <div className="h-[350px] overflow-y-auto space-y-4 pr-2 scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent">
         {articles.length === 0 ? (
           <div className="text-center py-8">
             <p className="text-gray-400">No recent legislative news found</p>
