@@ -264,7 +264,8 @@ export default function BillDashboardScan() {
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-center">
-                      {/* Pie Chart */}
+                      {/* Pie Chart - Only show if we have sources */}
+                      {billData.moneyMap?.sources && billData.moneyMap.sources.length > 0 ? (
                       <div className="md:col-span-1 flex flex-col items-center">
                         <h3 className="font-semibold text-gray-300 mb-2 text-center">Funding Sources</h3>
                         <svg className="w-40 h-40" viewBox="0 0 100 100">
@@ -316,35 +317,11 @@ export default function BillDashboardScan() {
                           ))}
                         </div>
                       </div>
-
-                      {/* Sankey Diagram */}
-                      <div className="w-full overflow-x-auto md:col-span-2">
-                        <svg width="100%" height="200" className="min-w-[500px]">
-                          <g className="nodes" fontFamily="sans-serif" fontSize="12" fill="#fff">
-                            <rect x="10" y="20" width="100" height="40" rx="8" fill="#1f2937" stroke="#4b5563" />
-                            <text x="60" y="45" textAnchor="middle">Energy</text>
-                            <rect x="10" y="100" width="100" height="40" rx="8" fill="#1f2937" stroke="#4b5563" />
-                            <text x="60" y="125" textAnchor="middle">Tech</text>
-                            <rect x="180" y="20" width="120" height="40" rx="8" fill="#1f2937" stroke="#4b5563" />
-                            <text x="240" y="45" textAnchor="middle">CleanFuture PAC</text>
-                            <rect x="180" y="100" width="120" height="40" rx="8" fill="#1f2937" stroke="#4b5563" />
-                            <text x="240" y="125" textAnchor="middle">Future Forward</text>
-                            <rect x="370" y="100" width="80" height="40" rx="8" fill="#1f2937" stroke="#4b5563" />
-                            <text x="410" y="125" textAnchor="middle">DNC</text>
-                            <rect x="520" y="20" width="120" height="40" rx="8" fill="#1f2937" stroke="#4b5563" />
-                            <text x="580" y="45" textAnchor="middle">Rep. Davis (D)</text>
-                            <rect x="520" y="100" width="120" height="40" rx="8" fill="#1f2937" stroke="#4b5563" />
-                            <text x="580" y="125" textAnchor="middle">Rep. Lee (D)</text>
-                          </g>
-                          <g className="links">
-                            <path className="fill-none stroke-opacity-50 stroke-12" stroke="#3b82f6" d="M 110 40 C 145 40, 145 40, 180 40" />
-                            <path className="fill-none stroke-opacity-50 stroke-12" stroke="#10b981" d="M 110 120 C 145 120, 145 120, 180 120" />
-                            <path className="fill-none stroke-opacity-50 stroke-12" stroke="#3b82f6" d="M 300 40 C 410 40, 410 40, 520 40" />
-                            <path className="fill-none stroke-opacity-50 stroke-12" stroke="#10b981" d="M 300 120 C 335 120, 335 120, 370 120" />
-                            <path className="fill-none stroke-opacity-50 stroke-12" stroke="#10b981" d="M 450 120 C 485 120, 485 120, 520 120" />
-                          </g>
-                        </svg>
+                      ) : (
+                      <div className="md:col-span-3 text-center py-8">
+                        <p className="text-gray-400">No funding source data available for this bill</p>
                       </div>
+                      )}
                     </div>
                   </section>
                 </div>

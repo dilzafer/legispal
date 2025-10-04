@@ -29,6 +29,11 @@ import {
   type BillAnalysis
 } from '../api/gemini'
 
+import {
+  getMoneyFlowForBill,
+  type MoneyFlowData
+} from '../api/fec'
+
 import { BillData } from '@/components/Dashboard/BillDashboard'
 
 /**
@@ -153,7 +158,7 @@ export async function getCompleteBillData(
     )
 
     // Build complete BillData object
-    return buildCompleteBillData(bill, votes, cosponsors, analysis)
+    return await buildCompleteBillData(bill, votes, cosponsors, analysis)
   } catch (error) {
     console.error('Error fetching complete bill data:', error)
     return null
@@ -296,12 +301,12 @@ async function convertCongressBillToBillData(
 /**
  * Build complete BillData from all sources
  */
-function buildCompleteBillData(
+async function buildCompleteBillData(
   bill: CongressBill,
   votes: CongressVote[],
   cosponsors: any[],
   analysis: BillAnalysis | null
-): BillData {
+): Promise<BillData> {
   // Get latest vote
   const latestVote = votes[0]
 
@@ -336,6 +341,19 @@ function buildCompleteBillData(
   const democratSupport = analysis?.publicSentiment?.democratSupport || 50
   const republicanSupport = analysis?.publicSentiment?.republicanSupport || 50
 
+  // Get real FEC money flow data
+  const categories = bill.subjects?.legislativeSubjects?.slice(0, 3).map(s => s.name) || []
+  if (bill.subjects?.policyArea?.name && categories.length < 3) {
+    categories.unshift(bill.subjects.policyArea.name)
+  }
+
+  console.log(`💰 Fetching FEC money data for ${bill.type}.${bill.number}...`)
+  const moneyFlow = await getMoneyFlowForBill(
+    bill.title,
+    categories,
+    bill.sponsors?.[0]?.fullName || ''
+  )
+
   return {
     id: `${bill.type}-${bill.number}`,
     title: bill.title,
@@ -350,10 +368,10 @@ function buildCompleteBillData(
     truthScore: analysis?.truthScore || 50,
     voteResults,
     moneyMap: {
-      total: analysis?.lobbyingInsights?.estimatedSpending || '$0',
-      change: '+0%',
-      topDonors: analysis?.lobbyingInsights?.topIndustries?.join(', ') || 'Unknown',
-      sources: []
+      total: moneyFlow.total,
+      change: moneyFlow.change,
+      topDonors: moneyFlow.topDonors,
+      sources: moneyFlow.sources
     },
     keyProvisions: analysis?.keyProvisions || [],
     hiddenImplications: analysis?.hiddenImplications || [],
