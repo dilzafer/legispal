@@ -14,6 +14,7 @@ import {
   Shield
 } from 'lucide-react'
 import Link from 'next/link'
+import OversightLogo from './OversightLogo'
 
 const sidebarItems = [
   { name: 'Dashboard', icon: Home, href: '/' },
@@ -40,13 +41,11 @@ export default function Sidebar() {
         animate={{ opacity: 1 }}
         transition={{ delay: 0.2 }}
       >
-        <h1 className="text-2xl font-bold text-white flex items-center gap-2">
-          <div className="w-8 h-8 bg-gradient-to-br from-truth-green to-democracy-gold rounded-lg flex items-center justify-center">
-            <BarChart3 size={20} className="text-white" />
-          </div>
+        <h1 className="text-2xl font-bold text-white flex items-center gap-3">
+          <OversightLogo className="w-10 h-10 text-white" />
           Oversight
         </h1>
-        <p className="text-xs text-gray-400 mt-1 ml-10">Truth Engine for Democracy</p>
+        <p className="text-xs text-gray-400 mt-1 ml-13">Truth Engine for Democracy</p>
       </motion.div>
 
       <nav className="space-y-1">
