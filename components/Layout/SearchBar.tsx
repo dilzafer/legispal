@@ -5,13 +5,17 @@ import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Search, Filter, Calendar, User, Building2, Mic, X, MapPin } from 'lucide-react'
 import type { Bill, Jurisdiction } from '@/backend/types/openstates'
+import type { CongressBill } from '@/backend/types/congress'
+
+type BillLevel = 'state' | 'federal'
 
 export default function SearchBar() {
   const router = useRouter()
+  const [billLevel, setBillLevel] = useState<BillLevel>('state')
   const [searchQuery, setSearchQuery] = useState('')
   const [showFilters, setShowFilters] = useState(false)
   const [isListening, setIsListening] = useState(false)
-  const [searchResults, setSearchResults] = useState<Bill[]>([])
+  const [searchResults, setSearchResults] = useState<(Bill | CongressBill)[]>([])
   const [isSearching, setIsSearching] = useState(false)
   const [selectedJurisdiction, setSelectedJurisdiction] = useState<string>('')
   const [jurisdictions, setJurisdictions] = useState<Jurisdiction[]>([])
@@ -42,19 +46,34 @@ export default function SearchBar() {
 
       setIsSearching(true)
       try {
-        const params = new URLSearchParams({
-          q: searchQuery,
-          per_page: '5',
-        })
-        
-        if (selectedJurisdiction) {
-          params.append('jurisdiction', selectedJurisdiction)
-        }
+        if (billLevel === 'state') {
+          // Search state bills via OpenStates
+          const params = new URLSearchParams({
+            q: searchQuery,
+            per_page: '5',
+          })
+          
+          if (selectedJurisdiction) {
+            params.append('jurisdiction', selectedJurisdiction)
+          }
 
-        const response = await fetch(`/api/bills/search?${params}`)
-        if (response.ok) {
-          const data = await response.json()
-          setSearchResults(data.results || [])
+          const response = await fetch(`/api/bills/search?${params}`)
+          if (response.ok) {
+            const data = await response.json()
+            setSearchResults(data.results || [])
+          }
+        } else {
+          // Search federal bills via Congress.gov
+          const params = new URLSearchParams({
+            q: searchQuery,
+            limit: '5',
+          })
+
+          const response = await fetch(`/api/bills/federal?${params}`)
+          if (response.ok) {
+            const data = await response.json()
+            setSearchResults(data.bills || [])
+          }
         }
       } catch (error) {
         console.error('Search error:', error)
@@ -65,13 +84,69 @@ export default function SearchBar() {
 
     const timeoutId = setTimeout(searchBills, 300)
     return () => clearTimeout(timeoutId)
-  }, [searchQuery, selectedJurisdiction])
+  }, [searchQuery, selectedJurisdiction, billLevel])
 
-  const handleBillClick = (bill: Bill) => {
-    // Navigate to bill detail page
-    router.push(`/bills/${bill.id}`)
+  const isStateBill = (bill: Bill | CongressBill): bill is Bill => {
+    return 'id' in bill && 'jurisdiction' in bill
+  }
+
+  const isFederalBill = (bill: Bill | CongressBill): bill is CongressBill => {
+    return 'congress' in bill && 'type' in bill
+  }
+
+  const handleBillClick = (bill: Bill | CongressBill) => {
+    if (isStateBill(bill)) {
+      router.push(`/bills/${bill.id}`)
+    } else if (isFederalBill(bill)) {
+      router.push(`/bills/federal/${bill.congress}/${bill.type}/${bill.number}`)
+    }
     setSearchQuery('')
     setSearchResults([])
+  }
+
+  const getBillIdentifier = (bill: Bill | CongressBill): string => {
+    if (isStateBill(bill)) {
+      return bill.identifier
+    } else if (isFederalBill(bill)) {
+      return `${bill.type.toUpperCase()} ${bill.number}`
+    }
+    return 'Unknown'
+  }
+
+  const getBillJurisdiction = (bill: Bill | CongressBill): string => {
+    if (isStateBill(bill)) {
+      return bill.jurisdiction.name
+    } else if (isFederalBill(bill)) {
+      return `Congress ${bill.congress}`
+    }
+    return 'Unknown'
+  }
+
+  const getBillLatestAction = (bill: Bill | CongressBill): string => {
+    if (isStateBill(bill)) {
+      return bill.latest_action_description || 'No recent action'
+    } else if (isFederalBill(bill)) {
+      return bill.latestAction?.text || 'No recent action'
+    }
+    return 'No recent action'
+  }
+
+  const getBillLatestActionDate = (bill: Bill | CongressBill): string | undefined => {
+    if (isStateBill(bill)) {
+      return bill.latest_action_date
+    } else if (isFederalBill(bill)) {
+      return bill.latestAction?.actionDate
+    }
+    return undefined
+  }
+
+  const getBillKey = (bill: Bill | CongressBill): string => {
+    if (isStateBill(bill)) {
+      return bill.id
+    } else if (isFederalBill(bill)) {
+      return `${bill.congress}-${bill.type}-${bill.number}`
+    }
+    return Math.random().toString()
   }
 
   const handleVoiceSearch = () => {
@@ -89,6 +164,30 @@ export default function SearchBar() {
         <div className="absolute inset-0 bg-gradient-to-r from-truth-green/20 to-democracy-gold/20 rounded-2xl blur-xl" />
         
         <div className="relative bg-slate-800/80 backdrop-blur-xl rounded-2xl border border-white/10 p-2">
+          {/* Level Toggle */}
+          <div className="flex items-center justify-center gap-2 mb-2 px-3 pt-2">
+            <button
+              onClick={() => setBillLevel('state')}
+              className={`px-4 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                billLevel === 'state'
+                  ? 'bg-truth-green text-white'
+                  : 'bg-white/5 text-gray-400 hover:text-white'
+              }`}
+            >
+              State Bills
+            </button>
+            <button
+              onClick={() => setBillLevel('federal')}
+              className={`px-4 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                billLevel === 'federal'
+                  ? 'bg-democracy-gold text-slate-900'
+                  : 'bg-white/5 text-gray-400 hover:text-white'
+              }`}
+            >
+              Federal Bills
+            </button>
+          </div>
+
           <div className="flex items-center gap-3">
             <Search className="text-gray-400 ml-3" size={20} />
             
@@ -124,7 +223,7 @@ export default function SearchBar() {
       </div>
 
       <AnimatePresence>
-        {showFilters && (
+        {showFilters && billLevel === 'state' && (
           <motion.div
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
@@ -175,12 +274,14 @@ export default function SearchBar() {
           {isSearching ? (
             <div className="px-4 py-6 text-center">
               <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-truth-green mx-auto mb-2"></div>
-              <p className="text-sm text-gray-400">Searching state bills...</p>
+              <p className="text-sm text-gray-400">
+                Searching {billLevel === 'state' ? 'state' : 'federal'} bills...
+              </p>
             </div>
           ) : searchResults.length > 0 ? (
             searchResults.map((bill, index) => (
               <motion.div
-                key={bill.id}
+                key={getBillKey(bill)}
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: index * 0.05 }}
@@ -191,16 +292,16 @@ export default function SearchBar() {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
                       <span className="px-2 py-0.5 bg-truth-green/20 text-truth-green rounded text-xs font-semibold">
-                        {bill.identifier}
+                        {getBillIdentifier(bill)}
                       </span>
                       <span className="px-2 py-0.5 bg-democracy-gold/20 text-democracy-gold rounded text-xs">
-                        {bill.jurisdiction.name}
+                        {getBillJurisdiction(bill)}
                       </span>
                     </div>
                     <p className="text-sm text-white font-medium truncate">{bill.title}</p>
                     <p className="text-xs text-gray-400 mt-1">
-                      {bill.latest_action_description || 'No recent action'}
-                      {bill.latest_action_date && ` • ${new Date(bill.latest_action_date).toLocaleDateString()}`}
+                      {getBillLatestAction(bill)}
+                      {getBillLatestActionDate(bill) && ` • ${new Date(getBillLatestActionDate(bill)!).toLocaleDateString()}`}
                     </p>
                   </div>
                 </div>
