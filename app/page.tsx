@@ -46,7 +46,7 @@ export default function Dashboard() {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.6 }}
-        className="bg-gradient-to-r from-truth-green/10 via-democracy-gold/10 to-gov-blue/10 rounded-2xl p-6 border border-white/10 mt-8"
+        className="bg-slate-900/50 backdrop-blur-sm rounded-2xl p-6 border border-white/10 mt-8"
       >
         <div className="text-center">
           <h3 className="text-xl font-bold text-white mb-2">Stay Informed, Stay Engaged</h3>
