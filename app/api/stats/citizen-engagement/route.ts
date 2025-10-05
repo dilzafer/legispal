@@ -1,10 +1,27 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { GoogleGenerativeAI } from '@google/generative-ai'
+import { dashboardCacheService } from '@/lib/firebase'
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '')
 
 export async function GET(request: NextRequest) {
   try {
+    // Try cache first
+    const cached = await dashboardCacheService.getCachedDashboardStats()
+    if (cached && cached.citizenEngagement && cached.citizenEngagement.totalComments > 0) {
+      console.log('✅ Using cached citizen engagement data')
+      return NextResponse.json({
+        count: cached.citizenEngagement.totalComments,
+        formatted: `${(cached.citizenEngagement.totalComments / 1000).toFixed(1)}K`,
+        change: cached.citizenEngagement.trend === 'up' ? `+${cached.citizenEngagement.percentChange}%` : 
+                cached.citizenEngagement.trend === 'down' ? `-${cached.citizenEngagement.percentChange}%` : '0%',
+        timeframe: 'vs last month',
+        lastUpdated: cached.cachedAt.toDate().toISOString(),
+        source: 'cached',
+        _fromCache: true,
+      })
+    }
+
     if (!process.env.GEMINI_API_KEY || process.env.GEMINI_API_KEY === 'your_gemini_api_key_here') {
       return NextResponse.json({
         count: 89500,
@@ -74,6 +91,18 @@ export async function GET(request: NextRequest) {
 
     try {
       const parsedResponse = JSON.parse(cleanText)
+      
+      // Cache the result
+      const percentChange = parseInt(parsedResponse.change?.replace(/[^0-9-]/g, '') || '5')
+      const trend = percentChange > 0 ? 'up' : percentChange < 0 ? 'down' : 'stable'
+      
+      await dashboardCacheService.cacheCitizenEngagement(
+        parsedResponse.count || 89500,
+        Math.floor((parsedResponse.count || 89500) / 100),
+        ['Healthcare', 'Climate', 'Economy'],
+        trend as 'up' | 'down' | 'stable',
+        Math.abs(percentChange)
+      )
       
       return NextResponse.json({
         ...parsedResponse,
