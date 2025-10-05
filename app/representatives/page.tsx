@@ -213,11 +213,11 @@ function RepresentativesContent() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
       {/* Header */}
-      <header className="bg-slate-950/80 backdrop-blur-sm border-b border-white/10 sticky top-0 z-50">
+      <header className="bg-slate-950/95 backdrop-blur-sm border-b border-white/10 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center gap-4">
-              <Link 
+              <Link
                 href="/"
                 className="p-2 hover:bg-slate-800 rounded-lg transition-colors"
               >
@@ -237,7 +237,9 @@ function RepresentativesContent() {
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      {/* Main content with solid background overlay */}
+      <div className="bg-slate-950/40 min-h-screen">
+        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Search and Filter Controls */}
         <motion.div 
           className="mb-8"
@@ -245,7 +247,7 @@ function RepresentativesContent() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
         >
-          <div className="bg-slate-900/70 rounded-xl p-6 border border-white/10">
+          <div className="bg-slate-900/90 backdrop-blur-sm rounded-xl p-6 border border-white/10 shadow-xl">
             <div className="flex flex-col gap-4">
               {/* Search Bar */}
               <div className="flex-1">
@@ -340,7 +342,7 @@ function RepresentativesContent() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.1 }}
-              className="bg-slate-900/80 rounded-xl border border-white/10 overflow-hidden"
+              className="bg-slate-900/90 backdrop-blur-sm rounded-xl border border-white/10 overflow-hidden shadow-lg hover:shadow-xl transition-shadow"
             >
               {/* Representative Header */}
               <div className="p-6">
@@ -503,7 +505,8 @@ function RepresentativesContent() {
             </div>
           </motion.div>
         )}
-      </main>
+        </main>
+      </div>
 
       {/* Bill Dashboard Overlay */}
       <BillDashboardScan />
