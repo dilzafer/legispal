@@ -157,18 +157,18 @@ Return ONLY the JSON object, no other text.`
               }
             })
 
-            // Cache the enhanced bills
+            // Cache the enhanced bills (ensure we cache exactly the limit)
             await dashboardCacheService.cacheTrendingBills(
               enhancedBills,
-              congressBills.length,
+              enhancedBills.length,
               trendAnalysis.analysis,
               realSource
             )
 
-            return NextResponse.json({
-              bills: enhancedBills,
-              totalCount: congressBills.length,
-              analysis: trendAnalysis.analysis,
+      return NextResponse.json({
+        bills: enhancedBills,
+        totalCount: enhancedBills.length,
+        analysis: trendAnalysis.analysis,
               lastUpdated: new Date().toISOString(),
               source: realSource,
               groundingMetadata: groundingMetadata ? {
@@ -198,17 +198,17 @@ Return ONLY the JSON object, no other text.`
         mediaAttention: 'medium'
       }))
 
-      // Cache the bills
+      // Cache the bills (ensure we cache exactly the limit)
       await dashboardCacheService.cacheTrendingBills(
         billsWithTrendScores,
-        congressBills.length,
+        billsWithTrendScores.length,
         'Recent congressional activity shows continued focus on key legislative priorities',
         realSource
       )
 
       return NextResponse.json({
         bills: billsWithTrendScores,
-        totalCount: congressBills.length,
+        totalCount: billsWithTrendScores.length,
         analysis: 'Recent congressional activity shows continued focus on key legislative priorities',
         lastUpdated: new Date().toISOString(),
         source: realSource,
