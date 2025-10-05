@@ -55,7 +55,7 @@ export default function MoneyFlow() {
     const color = isSource ? nodeColors[payload.name] || '#64748b' : '#475569'
 
     return (
-      <g key={`node-${index}`}>
+      <g>
         <Rectangle
           x={x}
           y={y}

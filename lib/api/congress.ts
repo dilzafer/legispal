@@ -389,6 +389,9 @@ export function estimatePolarizationFromMetadata(bill: CongressBill): {
   confidence: 'low' | 'medium' | 'high'
 } {
   const sponsorParty = bill.sponsors?.[0]?.party || 'Unknown'
+  
+  // Debug logging
+  console.log(`    🔍 Analyzing ${bill.type}.${bill.number}: sponsor=${sponsorParty}, subjects=${bill.subjects?.legislativeSubjects?.length || 0}`)
 
   // Get cosponsor party breakdown
   const cosponsors = bill.cosponsors || []
@@ -398,81 +401,96 @@ export function estimatePolarizationFromMetadata(bill: CongressBill): {
 
   // If we have good cosponsor data, use it
   if (totalCosponsors >= 10) {
-    return {
+    const result = {
       democratSupport: Math.round((demCosponsors / totalCosponsors) * 100),
       republicanSupport: Math.round((repCosponsors / totalCosponsors) * 100),
-      confidence: 'high'
+      confidence: 'high' as const
     }
+    console.log(`    ✅ Using cosponsor data: Dem ${result.democratSupport}%, Rep ${result.republicanSupport}%`)
+    return result
   }
 
   // Check bill subjects for politically polarizing topics
   const subjects = bill.subjects?.legislativeSubjects?.map(s => s.name.toLowerCase()) || []
   const policyArea = bill.subjects?.policyArea?.name.toLowerCase() || ''
   const allSubjects = [...subjects, policyArea].join(' ')
+  
+  console.log(`    📝 Subjects: ${allSubjects.substring(0, 100)}...`)
 
-  // Conservative-leaning topics
-  const conservativeKeywords = ['border', 'immigration', 'defense', 'military', 'gun', 'second amendment', 'tax cut', 'regulation']
+  // Expanded keyword lists for better detection
+  const conservativeKeywords = [
+    'border', 'immigration', 'defense', 'military', 'gun', 'second amendment', 
+    'tax cut', 'regulation', 'energy', 'oil', 'gas', 'coal', 'fossil fuel',
+    'abortion', 'pro-life', 'religious freedom', 'traditional marriage',
+    'school choice', 'vouchers', 'charter schools', 'voter id', 'election security'
+  ]
+  
+  const liberalKeywords = [
+    'climate', 'healthcare', 'abortion', 'reproductive', 'voting rights', 
+    'minimum wage', 'social security', 'medicare', 'environmental', 'green energy',
+    'renewable', 'carbon', 'greenhouse gas', 'pro-choice', 'lgbtq', 'equality',
+    'public education', 'teacher', 'student loan', 'debt forgiveness', 'universal healthcare'
+  ]
+
   const isConservative = conservativeKeywords.some(kw => allSubjects.includes(kw))
-
-  // Liberal-leaning topics
-  const liberalKeywords = ['climate', 'healthcare', 'abortion', 'reproductive', 'voting rights', 'minimum wage', 'social security', 'medicare']
   const isLiberal = liberalKeywords.some(kw => allSubjects.includes(kw))
 
-  // Bipartisan topics
-  const bipartisanKeywords = ['infrastructure', 'veterans', 'agriculture', 'postal']
-  const isBipartisan = bipartisanKeywords.some(kw => allSubjects.includes(kw))
+  console.log(`    🎯 Conservative: ${isConservative}, Liberal: ${isLiberal}`)
 
-  if (isBipartisan) {
-    return {
-      democratSupport: 60,
-      republicanSupport: 55,
-      confidence: 'medium'
-    }
-  }
-
+  // More aggressive polarization for detected topics
   if (isConservative) {
-    return sponsorParty === 'R' || sponsorParty === 'Republican' ? {
-      democratSupport: 20,
-      republicanSupport: 85,
-      confidence: 'medium'
+    const result = sponsorParty === 'R' || sponsorParty === 'Republican' ? {
+      democratSupport: 15,
+      republicanSupport: 90,
+      confidence: 'medium' as const
     } : {
-      democratSupport: 35,
-      republicanSupport: 70,
-      confidence: 'low'
+      democratSupport: 30,
+      republicanSupport: 75,
+      confidence: 'medium' as const
     }
+    console.log(`    🔴 Conservative bill: Dem ${result.democratSupport}%, Rep ${result.republicanSupport}%`)
+    return result
   }
 
   if (isLiberal) {
-    return sponsorParty === 'D' || sponsorParty === 'Democratic' ? {
-      democratSupport: 85,
-      republicanSupport: 20,
-      confidence: 'medium'
+    const result = sponsorParty === 'D' || sponsorParty === 'Democratic' ? {
+      democratSupport: 90,
+      republicanSupport: 15,
+      confidence: 'medium' as const
     } : {
-      democratSupport: 70,
-      republicanSupport: 35,
-      confidence: 'low'
+      democratSupport: 75,
+      republicanSupport: 30,
+      confidence: 'medium' as const
     }
+    console.log(`    🔵 Liberal bill: Dem ${result.democratSupport}%, Rep ${result.republicanSupport}%`)
+    return result
   }
 
-  // Default: slight lean toward sponsor's party
+  // Default: create some polarization based on sponsor party
   if (sponsorParty === 'D' || sponsorParty === 'Democratic') {
-    return {
-      democratSupport: 65,
-      republicanSupport: 45,
-      confidence: 'low'
+    const result = {
+      democratSupport: 70,
+      republicanSupport: 40,
+      confidence: 'low' as const
     }
+    console.log(`    🔵 Dem sponsor default: Dem ${result.democratSupport}%, Rep ${result.republicanSupport}%`)
+    return result
   } else if (sponsorParty === 'R' || sponsorParty === 'Republican') {
-    return {
-      democratSupport: 45,
-      republicanSupport: 65,
-      confidence: 'low'
+    const result = {
+      democratSupport: 40,
+      republicanSupport: 70,
+      confidence: 'low' as const
     }
+    console.log(`    🔴 Rep sponsor default: Dem ${result.democratSupport}%, Rep ${result.republicanSupport}%`)
+    return result
   }
 
-  // Truly unknown
-  return {
-    democratSupport: 50,
-    republicanSupport: 50,
-    confidence: 'low'
+  // Truly unknown - create some artificial polarization for demo purposes
+  const result = {
+    democratSupport: 45,
+    republicanSupport: 55,
+    confidence: 'low' as const
   }
+  console.log(`    ❓ Unknown sponsor: Dem ${result.democratSupport}%, Rep ${result.republicanSupport}%`)
+  return result
 }
