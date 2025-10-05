@@ -43,7 +43,7 @@ export const truthScoreFactors: TruthScoreFactor[] = [
     description: 'Measures the completeness and accuracy of lobbying disclosure data, including financial transparency and conflict of interest reporting.',
     methodology: 'Analyzes lobbying expenditure reports, disclosure timeliness, and completeness of client information against federal reporting requirements.',
     dataSources: ['LDA Database', 'OpenSecrets', 'Federal Election Commission', 'House Clerk', 'Senate Secretary'],
-    lastUpdated: '2024-10-15',
+    lastUpdated: '2025-10-15',
     trend: 'up',
     details: {
       subFactors: [
@@ -77,7 +77,7 @@ export const truthScoreFactors: TruthScoreFactor[] = [
     description: 'Evaluates the authenticity and completeness of bill information, including sponsor transparency and amendment tracking.',
     methodology: 'Cross-references bill data across multiple sources, validates sponsor information, and tracks amendment authenticity.',
     dataSources: ['Congress.gov', 'GovTrack', 'Ballotpedia', 'CRS Reports', 'Committee Records'],
-    lastUpdated: '2024-10-14',
+    lastUpdated: '2025-10-14',
     trend: 'stable',
     details: {
       subFactors: [
@@ -111,7 +111,7 @@ export const truthScoreFactors: TruthScoreFactor[] = [
     description: 'Advanced NLP analysis of political discourse to detect partisan bias, misleading statements, and factual accuracy.',
     methodology: 'Machine learning models trained on verified political statements, fact-checking databases, and neutral reporting standards.',
     dataSources: ['FactCheck.org', 'PolitiFact', 'AP News', 'Reuters', 'Congressional Record'],
-    lastUpdated: '2024-10-13',
+    lastUpdated: '2025-10-13',
     trend: 'up',
     details: {
       subFactors: [
@@ -145,7 +145,7 @@ export const truthScoreFactors: TruthScoreFactor[] = [
     description: 'Tracks voting record consistency, campaign promise fulfillment, and constituent engagement metrics.',
     methodology: 'Compares voting patterns against campaign promises, measures constituent communication responsiveness, and tracks conflict of interest disclosures.',
     dataSources: ['VoteSmart', 'OpenCongress', 'ProPublica', 'Federal Election Commission', 'Congressional Offices'],
-    lastUpdated: '2024-10-12',
+    lastUpdated: '2025-10-12',
     trend: 'down',
     details: {
       subFactors: [
@@ -179,7 +179,7 @@ export const truthScoreFactors: TruthScoreFactor[] = [
     description: 'Real-time verification of political data against authoritative sources and detection of inconsistencies.',
     methodology: 'Automated cross-referencing of data points, anomaly detection algorithms, and human verification sampling.',
     dataSources: ['Government APIs', 'Official Records', 'Academic Databases', 'News Archives', 'Fact-Checking Services'],
-    lastUpdated: '2024-10-15',
+    lastUpdated: '2025-10-15',
     trend: 'up',
     details: {
       subFactors: [
@@ -210,7 +210,7 @@ export const truthScoreCalculation: TruthScoreCalculation = {
   overall: 77,
   factors: truthScoreFactors,
   confidence: 87,
-  lastCalculated: '2024-10-15T14:30:00Z',
+  lastCalculated: '2025-10-15T14:30:00Z',
   version: 'v2.1.3',
   methodology: {
     description: 'Advanced multi-factor analysis combining transparency metrics, integrity verification, bias detection algorithms, and accountability tracking to generate a comprehensive truth score for political information.',
