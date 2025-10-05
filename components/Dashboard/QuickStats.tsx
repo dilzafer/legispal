@@ -197,10 +197,24 @@ export default function QuickStats() {
                         transition={{ duration: 0.2 }}
                         className="overflow-hidden"
                       >
-                        <div className="mt-2 max-h-48 overflow-y-auto space-y-3">
+                        <div className="mt-2 max-h-64 overflow-y-auto space-y-3 pr-2">
                           <div className="text-xs text-gray-400">
                             <p className="font-medium text-gray-300 mb-2">Data Source:</p>
-                            <p className="text-xs leading-relaxed bg-slate-800/30 p-2 rounded border border-white/5">{stat.source}</p>
+                            {stat.source?.includes('http') || stat.source?.includes('www.') ? (
+                              <a
+                                href={stat.source.includes('http') ? stat.source : `https://${stat.source}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-xs leading-relaxed bg-slate-800/30 p-2 rounded border border-white/5 hover:border-truth-green/30 hover:bg-slate-800/50 transition-all text-truth-green hover:text-truth-green/80 inline-flex items-center gap-1 break-all"
+                              >
+                                {stat.source}
+                                <svg className="w-3 h-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                                </svg>
+                              </a>
+                            ) : (
+                              <p className="text-xs leading-relaxed bg-slate-800/30 p-2 rounded border border-white/5 break-words">{stat.source}</p>
+                            )}
                           </div>
                           
                           {stat.groundingMetadata?.webSearchQueries && stat.groundingMetadata.webSearchQueries.length > 0 && (
