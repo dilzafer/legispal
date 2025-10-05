@@ -3,10 +3,49 @@
 import { motion, AnimatePresence } from 'framer-motion'
 import { Users, Search, Filter, ArrowLeft, Mail, Phone, MapPin, Globe, ChevronDown, ChevronUp } from 'lucide-react'
 import Link from 'next/link'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import BillDashboardScan from '@/components/Dashboard/BillDashboardScan'
 import { BillDashboardProvider, useBillDashboard } from '@/lib/useBillDashboard'
-import { mockRepresentatives, representativeBills, Representative, RepresentativeBill } from '@/lib/mockRepresentativeData'
+
+export interface Representative {
+  id: string
+  bioguideId: string
+  name: string
+  title: string
+  party: 'Democrat' | 'Republican' | 'Independent'
+  state: string
+  district?: string
+  chamber: 'House' | 'Senate'
+  imageUrl?: string
+  bio: string
+  yearsInOffice: number
+  committeeMemberships: string[]
+  sponsoredBills: string[]
+  votingRecord: {
+    totalVotes: number
+    partyUnity: number
+    bipartisanVotes: number
+  }
+  contactInfo: {
+    website: string
+    email: string
+    phone: string
+    office: string
+  }
+}
+
+export interface RepresentativeBill {
+  id: string
+  title: string
+  status: 'Introduced' | 'Committee' | 'House' | 'Senate' | 'Enacted'
+  date: string
+  summary: string
+  controversy: 'Low' | 'Medium' | 'High'
+  trendScore: number
+  supportersCount: number
+  opposersCount: number
+  categories: string[]
+}
 
 function RepresentativesContent() {
   const [searchTerm, setSearchTerm] = useState('')
@@ -14,7 +53,74 @@ function RepresentativesContent() {
   const [filterChamber, setFilterChamber] = useState<string>('all')
   const [selectedRep, setSelectedRep] = useState<Representative | null>(null)
   const [expandedRep, setExpandedRep] = useState<string | null>(null)
+  const [representatives, setRepresentatives] = useState<Representative[]>([])
+  const [representativeBills, setRepresentativeBills] = useState<Record<string, RepresentativeBill[]>>({})
+  const [loading, setLoading] = useState(true)
+  const [loadingBills, setLoadingBills] = useState<Record<string, boolean>>({})
+  const [error, setError] = useState<string | null>(null)
   const { openBillDashboard } = useBillDashboard()
+
+  // Fetch representatives on mount
+  useEffect(() => {
+    async function fetchRepresentatives() {
+      try {
+        setLoading(true)
+        setError(null)
+        console.log('🔄 Fetching representatives from API...')
+
+        const response = await fetch('/api/representatives')
+        if (!response.ok) {
+          throw new Error('Failed to fetch representatives')
+        }
+
+        const data = await response.json()
+        console.log(`✅ Loaded ${data.representatives?.length || 0} representatives`)
+
+        setRepresentatives(data.representatives || [])
+      } catch (err) {
+        console.error('❌ Error fetching representatives:', err)
+        setError('Failed to load representatives. Please try again later.')
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchRepresentatives()
+  }, [])
+
+  // Fetch bills when a representative is expanded
+  async function fetchBillsForRepresentative(bioguideId: string) {
+    if (representativeBills[bioguideId]) {
+      // Already loaded
+      return
+    }
+
+    try {
+      setLoadingBills(prev => ({ ...prev, [bioguideId]: true }))
+      console.log(`🔄 Fetching bills for ${bioguideId}...`)
+
+      const response = await fetch(`/api/representatives/${bioguideId}/bills?limit=6`)
+      if (!response.ok) {
+        throw new Error('Failed to fetch bills')
+      }
+
+      const data = await response.json()
+      console.log(`✅ Loaded ${data.bills?.length || 0} bills for ${bioguideId}`)
+
+      setRepresentativeBills(prev => ({
+        ...prev,
+        [bioguideId]: data.bills || []
+      }))
+    } catch (err) {
+      console.error(`❌ Error fetching bills for ${bioguideId}:`, err)
+      setRepresentativeBills(prev => ({
+        ...prev,
+        [bioguideId]: []
+      }))
+    } finally {
+      setLoadingBills(prev => ({ ...prev, [bioguideId]: false }))
+    }
+  }
 
   const getPartyColor = (party: string) => {
     switch (party) {
@@ -34,7 +140,7 @@ function RepresentativesContent() {
     }
   }
 
-  const filteredRepresentatives = mockRepresentatives
+  const filteredRepresentatives = representatives
     .filter(rep => {
       const matchesSearch = rep.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                            rep.state.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -44,8 +150,14 @@ function RepresentativesContent() {
       return matchesSearch && matchesParty && matchesChamber
     })
 
-  const toggleExpanded = (repId: string) => {
-    setExpandedRep(expandedRep === repId ? null : repId)
+  const toggleExpanded = (repId: string, bioguideId: string) => {
+    const isExpanding = expandedRep !== repId
+    setExpandedRep(isExpanding ? repId : null)
+
+    // Fetch bills when expanding
+    if (isExpanding) {
+      fetchBillsForRepresentative(bioguideId)
+    }
   }
 
   return (
@@ -135,13 +247,43 @@ function RepresentativesContent() {
             
             {/* Results Count */}
             <div className="mt-4 text-sm text-gray-400">
-              Showing {filteredRepresentatives.length} of {mockRepresentatives.length} representatives
+              {loading ? (
+                'Loading representatives...'
+              ) : error ? (
+                <span className="text-red-400">{error}</span>
+              ) : (
+                `Showing ${filteredRepresentatives.length} of ${representatives.length} representatives`
+              )}
             </div>
           </div>
         </motion.div>
 
+        {/* Loading State */}
+        {loading && (
+          <div className="flex items-center justify-center py-12">
+            <div className="text-center">
+              <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-democracy-gold mb-4"></div>
+              <p className="text-gray-400">Loading representatives from Congress.gov...</p>
+            </div>
+          </div>
+        )}
+
+        {/* Error State */}
+        {error && !loading && (
+          <div className="bg-red-900/20 border border-red-500/50 rounded-xl p-6 text-center">
+            <p className="text-red-400 mb-2">{error}</p>
+            <button
+              onClick={() => window.location.reload()}
+              className="px-4 py-2 bg-red-500/20 hover:bg-red-500/30 rounded-lg text-red-300 transition-colors"
+            >
+              Retry
+            </button>
+          </div>
+        )}
+
         {/* Representatives Grid */}
-        <div className="space-y-6">
+        {!loading && !error && (
+          <div className="space-y-6">
           {filteredRepresentatives.map((rep, index) => (
             <motion.div
               key={rep.id}
@@ -171,9 +313,9 @@ function RepresentativesContent() {
                       <div>Party Unity: <span className="text-white">{rep.votingRecord.partyUnity}%</span></div>
                     </div>
                   </div>
-                  
+
                   <button
-                    onClick={() => toggleExpanded(rep.id)}
+                    onClick={() => toggleExpanded(rep.id, rep.bioguideId)}
                     className="p-2 hover:bg-slate-800 rounded-lg transition-colors"
                   >
                     {expandedRep === rep.id ? <ChevronUp className="text-white" size={20} /> : <ChevronDown className="text-white" size={20} />}
@@ -236,9 +378,14 @@ function RepresentativesContent() {
                       {/* Sponsored Bills */}
                       <div>
                         <h4 className="text-lg font-semibold text-white mb-3">Sponsored Bills</h4>
-                        {representativeBills[rep.id] && representativeBills[rep.id].length > 0 ? (
+                        {loadingBills[rep.bioguideId] ? (
+                          <div className="flex items-center justify-center py-8">
+                            <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-democracy-gold mr-3"></div>
+                            <span className="text-gray-400">Loading bills...</span>
+                          </div>
+                        ) : representativeBills[rep.bioguideId] && representativeBills[rep.bioguideId].length > 0 ? (
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            {representativeBills[rep.id].map((bill) => (
+                            {representativeBills[rep.bioguideId].map((bill) => (
                               <motion.div
                                 key={bill.id}
                                 className="bg-slate-800/50 rounded-lg p-4 border border-white/5 hover:bg-slate-800/70 transition-all cursor-pointer group"
@@ -286,11 +433,12 @@ function RepresentativesContent() {
               </AnimatePresence>
             </motion.div>
           ))}
-        </div>
+          </div>
+        )}
 
         {/* Empty State */}
-        {filteredRepresentatives.length === 0 && (
-          <motion.div 
+        {!loading && !error && filteredRepresentatives.length === 0 && (
+          <motion.div
             className="text-center py-12"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
