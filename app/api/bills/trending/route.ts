@@ -92,6 +92,7 @@ Return ONLY the JSON object, no other text.`
 
           const result = await model.generateContent({
             contents: [{
+              role: 'user',
               parts: [{ text: prompt }]
             }],
             tools: [{

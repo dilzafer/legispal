@@ -5,9 +5,9 @@ import SearchBar from './SearchBar'
 
 export default function ConditionalHeader() {
   const pathname = usePathname()
-  
-  // Hide header on search page since it has its own header
-  if (pathname === '/search') {
+
+  // Hide header on pages that have their own headers
+  if (pathname === '/search' || pathname === '/trending' || pathname === '/lobbying') {
     return null
   }
   

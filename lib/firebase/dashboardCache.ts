@@ -276,10 +276,22 @@ export class DashboardCacheService {
       const now = Timestamp.now();
       const expiresAt = Timestamp.fromMillis(now.toMillis() + TRENDING_BILLS_CACHE_DURATION);
 
+      // Filter out any undefined values from bills
+      const sanitizedBills = bills.map(bill => {
+        const sanitized: any = {};
+        Object.keys(bill).forEach(key => {
+          const value = (bill as any)[key];
+          if (value !== undefined) {
+            sanitized[key] = value;
+          }
+        });
+        return sanitized;
+      });
+
       const cacheData: Omit<TrendingBillsCache, 'id'> = {
-        bills,
-        totalCount,
-        analysis,
+        bills: sanitizedBills,
+        totalCount: totalCount || bills.length,
+        analysis: analysis || '',
         source: source || 'unknown',
         cachedAt: now,
         expiresAt,
