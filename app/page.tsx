@@ -8,14 +8,11 @@ import PolarizingBills from '@/components/Dashboard/PolarizingBills'
 import BillAnalysis from '@/components/AI/BillAnalysis'
 import MoneyFlow from '@/components/Visualizations/MoneyFlow'
 import InTheNews from '@/components/Dashboard/InTheNews'
-import BillDashboardScan from '@/components/Dashboard/BillDashboardScan'
-import { BillDashboardProvider } from '@/lib/useBillDashboard'
 import { CONFIG } from '@/lib/config'
 
 export default function Dashboard() {
   return (
-    <BillDashboardProvider>
-      <div className="space-y-6">
+    <div className="space-y-6">
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -59,10 +56,6 @@ export default function Dashboard() {
           </button>
         </div>
       </motion.div>
-
-      {/* Global Bill Dashboard Overlay */}
-      <BillDashboardScan />
-      </div>
-    </BillDashboardProvider>
+    </div>
   )
 }

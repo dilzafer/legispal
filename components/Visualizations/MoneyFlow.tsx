@@ -55,8 +55,9 @@ export default function MoneyFlow() {
     const color = isSource ? nodeColors[payload.name] || '#64748b' : '#475569'
 
     return (
-      <g>
+      <g key={`node-${index}`}>
         <Rectangle
+          key={`rect-${index}`}
           x={x}
           y={y}
           width={width}
@@ -65,6 +66,7 @@ export default function MoneyFlow() {
           fillOpacity={0.8}
         />
         <text
+          key={`text-${index}`}
           x={x + width / 2}
           y={y + height / 2}
           textAnchor="middle"

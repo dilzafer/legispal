@@ -6,11 +6,13 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { Search, Filter, Calendar, User, Building2, Mic, X, MapPin } from 'lucide-react'
 import type { Bill, Jurisdiction } from '@/backend/types/openstates'
 import type { CongressBill } from '@/backend/types/congress'
+import { useBillDashboard } from '@/lib/useBillDashboard'
 
 type BillLevel = 'state' | 'federal'
 
 export default function SearchBar() {
   const router = useRouter()
+  const { openBillDashboard } = useBillDashboard()
   const [billLevel, setBillLevel] = useState<BillLevel>('state')
   const [searchQuery, setSearchQuery] = useState('')
   const [showFilters, setShowFilters] = useState(false)
@@ -96,9 +98,14 @@ export default function SearchBar() {
 
   const handleBillClick = (bill: Bill | CongressBill) => {
     if (isStateBill(bill)) {
-      router.push(`/bills/${bill.id}`)
+      // State bills navigate to their detail page - URL encode the ID to handle slashes
+      const encodedBillId = encodeURIComponent(bill.id)
+      router.push(`/bills/${encodedBillId}`)
     } else if (isFederalBill(bill)) {
-      router.push(`/bills/federal/${bill.congress}/${bill.type}/${bill.number}`)
+      // Federal bills open in the BillDashboard overlay with congress-type-number format
+      const billId = `${bill.congress}-${bill.type.toUpperCase()}-${bill.number}`
+      console.log(`Opening federal bill: ${billId}`)
+      openBillDashboard(billId)
     }
     setSearchQuery('')
     setSearchResults([])
