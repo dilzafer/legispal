@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { GoogleGenerativeAI } from '@google/generative-ai'
+import { GoogleGenerativeAI, DynamicRetrievalMode } from '@google/generative-ai'
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '')
 
@@ -123,12 +123,15 @@ export async function GET(request: NextRequest) {
       })
     }
 
-    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" })
+    const model = genAI.getGenerativeModel({
+      model: "gemini-2.0-flash-exp",
+      tools: [{ googleSearchRetrieval: { dynamicRetrievalConfig: { mode: DynamicRetrievalMode.MODE_DYNAMIC, dynamicThreshold: 0.3 } } }]
+    })
 
     const prompt = `
-    You are an expert political analyst providing a comprehensive overview of the current US Congressional and legislative landscape. 
-    
-    IMPORTANT: Please search for and analyze the most recent information from the past 7 days. Focus on current events, recent votes, and up-to-date legislative activity.
+    You are an expert political analyst providing a comprehensive overview of the current US Congressional and legislative landscape.
+
+    IMPORTANT: Search the web for the most recent information from the past 7 days. Focus on current events, recent votes, and up-to-date legislative activity from reliable sources like Congress.gov, Roll Call, The Hill, Politico.
     
     Please analyze and provide insights on:
     1. Recent legislative activity (specifically from the past week)

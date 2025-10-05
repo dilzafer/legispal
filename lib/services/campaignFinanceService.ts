@@ -329,7 +329,7 @@ function buildSankeyData(
       const share = committeeTotal / totalTracked
       const value = recipientTotal * share * 0.3 // 30% flows through to committees
 
-      if (value > 1000) {
+      if (value > 100) { // Lowered threshold from 1000 to 100
         links.push({
           source: recipientId,
           target: committeeId,
@@ -339,6 +339,8 @@ function buildSankeyData(
       }
     }
   }
+
+  console.log(`📊 Sankey data: ${nodes.length} nodes, ${links.length} links`)
 
   return { nodes, links }
 }
@@ -367,22 +369,31 @@ export async function getCampaignFinanceDashboardData(): Promise<CampaignFinance
 
     // Map lobbying data to sectors
     const sectorData = mapLobbyingToSectors(lobbyingFilings)
+    console.log(`📊 Mapped ${sectorData.size} sectors from lobbying data`)
 
     // Calculate total lobbying income
     const totalLobbying = Array.from(sectorData.values())
       .reduce((sum, data) => sum + data.totalAmount, 0)
+    console.log(`💰 Total lobbying: $${totalLobbying.toLocaleString()}`)
 
     // Fetch FEC independent expenditures (last 30 days)
     const fecExpenditures = await fetchRecentIndependentExpenditures(30)
 
     // Total tracked = Lobbying + FEC expenditures
     const totalTracked = totalLobbying + fecExpenditures
+    console.log(`💰 Total tracked: $${totalTracked.toLocaleString()}`)
 
     // Estimate dark money
     const darkMoney = await estimateDarkMoney(totalTracked)
 
     // Build Sankey diagram structure
     const { nodes, links } = buildSankeyData(sectorData, totalTracked)
+
+    // If no links were generated, use fallback data
+    if (links.length === 0) {
+      console.warn('⚠️ No links generated from real data, using fallback')
+      throw new Error('Insufficient data for flow visualization')
+    }
 
     console.log(`✅ Campaign finance data ready: $${(totalTracked || 0).toLocaleString()} tracked, $${(darkMoney || 0).toLocaleString()} dark money estimated`)
 

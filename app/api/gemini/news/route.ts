@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { GoogleGenerativeAI } from '@google/generative-ai'
+import { GoogleGenerativeAI, DynamicRetrievalMode } from '@google/generative-ai'
 import { dashboardCacheService } from '@/lib/firebase'
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '')
@@ -39,12 +39,15 @@ export async function GET(request: NextRequest) {
       })
     }
 
-    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" })
+    const model = genAI.getGenerativeModel({
+      model: "gemini-2.0-flash-exp",
+      tools: [{ googleSearchRetrieval: { dynamicRetrievalConfig: { mode: DynamicRetrievalMode.MODE_DYNAMIC, dynamicThreshold: 0.3 } } }]
+    })
 
     const prompt = `
-    Search for and provide a brief, informative summary of recent US Congressional news from the past 7 days (this week). 
-    
-    IMPORTANT: Focus on the most current information available. Search for recent developments.
+    Search the web for a brief, informative summary of recent US Congressional news from the past 7 days (this week).
+
+    IMPORTANT: Use web search to find the most current information available from Congress.gov, Roll Call, The Hill, or Politico. Focus on recent developments.
     
     Focus on:
     - Recent votes and their outcomes from the past week
