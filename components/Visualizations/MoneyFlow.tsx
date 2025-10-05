@@ -165,7 +165,13 @@ export default function MoneyFlow() {
           <div className="h-[400px]">
             <ResponsiveContainer width="100%" height="100%">
               <Sankey
-                data={{ nodes: financeData.nodes, links: financeData.links }}
+                data={{
+                  nodes: financeData.nodes.map((node, idx) => ({
+                    ...node,
+                    depth: node.depth ?? (idx < 4 ? 0 : 1)
+                  })),
+                  links: financeData.links
+                }}
                 nodeWidth={15}
                 nodePadding={50}
                 margin={{ top: 20, right: 80, bottom: 20, left: 120 }}
