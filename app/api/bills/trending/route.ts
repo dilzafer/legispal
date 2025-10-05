@@ -9,21 +9,34 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url)
     const limit = parseInt(searchParams.get('limit') || '10', 10)
     const includeAnalysis = searchParams.get('analysis') === 'true'
+    const bypassCache = searchParams.get('cache') === 'false'
 
     console.log(`🔍 API: Fetching ${limit} trending bills${includeAnalysis ? ' with AI analysis' : ''}...`)
 
-    // Try cache first
-    const cached = await dashboardCacheService.getCachedTrendingBills()
-    if (cached && cached.bills && cached.bills.length > 0) {
-      console.log(`✅ Using ${cached.bills.length} cached trending bills`)
+    // Try cache first (unless bypassed)
+    if (!bypassCache) {
+      const cached = await dashboardCacheService.getCachedTrendingBills()
+      if (cached && cached.bills && cached.bills.length > 0) {
+      // Ensure uniqueness and exact count from cache
+      const uniqueCachedBills = cached.bills.reduce((acc: any[], bill: any) => {
+        const billId = bill.id || `${bill.type || 'HR'}.${bill.number || '0000'}`
+        if (!acc.find(b => (b.id || `${b.type || 'HR'}.${b.number || '0000'}`) === billId)) {
+          acc.push(bill)
+        }
+        return acc
+      }, [])
+      
+      const finalCachedBills = uniqueCachedBills.slice(0, limit)
+      console.log(`✅ Using ${finalCachedBills.length} cached trending bills`)
       return NextResponse.json({
-        bills: cached.bills.slice(0, limit),
-        totalCount: cached.totalCount,
+        bills: finalCachedBills,
+        totalCount: finalCachedBills.length,
         analysis: cached.analysis,
         lastUpdated: cached.cachedAt.toDate().toISOString(),
         source: cached.source,
         _fromCache: true,
       })
+      }
     }
 
     // First, try to get real data from Congress.gov API
@@ -52,7 +65,16 @@ export async function GET(request: NextRequest) {
 
     // If we have real bills, enhance them with AI analysis if requested
     if (congressBills.length > 0) {
-      let enhancedBills = congressBills.slice(0, limit)
+      // Remove duplicates based on bill ID and ensure we have exactly the requested limit
+      const uniqueBills = congressBills.reduce((acc: any[], bill) => {
+        const billId = `${bill.type}.${bill.number}`
+        if (!acc.find(b => `${b.type}.${b.number}` === billId)) {
+          acc.push(bill)
+        }
+        return acc
+      }, [])
+      
+      let enhancedBills = uniqueBills.slice(0, limit)
 
       if (includeAnalysis && process.env.GEMINI_API_KEY && process.env.GEMINI_API_KEY !== 'your_gemini_api_key_here') {
         try {
@@ -209,11 +231,13 @@ Return ONLY the JSON object, no other text.`
     const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' })
 
     const prompt = `
-    Identify the most trending and discussed bills currently in the US Congress. Focus on legislation that is:
+    Identify exactly ${limit} unique trending and discussed bills currently in the US Congress. Focus on legislation that is:
     1. Currently active in committees or on the floor
     2. Receiving significant media attention
     3. Generating public debate or controversy
     4. Likely to impact major policy areas
+
+    IMPORTANT: Return exactly ${limit} unique bills with different bill numbers (HR, S, etc.). No duplicates.
 
     Return ONLY a JSON object with this exact format:
     {
@@ -222,7 +246,7 @@ Return ONLY the JSON object, no other text.`
           "id": "HR.1234",
           "title": "Bill Title",
           "sponsor": "Rep. John Doe (D-CA)",
-          "date": "2024-10-01",
+          "date": "2025-01-01",
           "trendScore": 85,
           "summary": "Brief description of the bill",
           "tags": ["tag1", "tag2"],
@@ -244,7 +268,7 @@ Return ONLY the JSON object, no other text.`
       "source": "AI-generated trending analysis"
     }
 
-    Focus on bills from the past week. Make the data realistic and current.
+    Focus on bills from the past week. Make the data realistic and current. Ensure all ${limit} bills are unique with different bill numbers.
     Return ONLY the JSON object, no other text.
     `
 
@@ -275,23 +299,37 @@ Return ONLY the JSON object, no other text.`
     try {
       const parsedResponse = JSON.parse(cleanText)
       
-      // Cache the Gemini-generated bills
+      // Ensure uniqueness and exact count
       if (parsedResponse.bills && parsedResponse.bills.length > 0) {
+        // Remove duplicates based on bill ID
+        const uniqueBills = parsedResponse.bills.reduce((acc: any[], bill: any) => {
+          if (!acc.find(b => b.id === bill.id)) {
+            acc.push(bill)
+          }
+          return acc
+        }, [])
+        
+        // Ensure exactly the requested limit
+        const finalBills = uniqueBills.slice(0, limit)
+        
+        // Cache the Gemini-generated bills
         await dashboardCacheService.cacheTrendingBills(
-          parsedResponse.bills,
-          parsedResponse.totalCount || parsedResponse.bills.length,
+          finalBills,
+          finalBills.length,
           parsedResponse.analysis,
           parsedResponse.source || 'AI-generated'
         )
+        
+        return NextResponse.json({
+          ...parsedResponse,
+          bills: finalBills,
+          totalCount: finalBills.length,
+          groundingMetadata: groundingMetadata ? {
+            webSearchQueries: groundingMetadata.webSearchQueries || [],
+            sourceCount: groundingMetadata.groundingChunks?.length || 0
+          } : null
+        })
       }
-      
-      return NextResponse.json({
-        ...parsedResponse,
-        groundingMetadata: groundingMetadata ? {
-          webSearchQueries: groundingMetadata.webSearchQueries || [],
-          sourceCount: groundingMetadata.groundingChunks?.length || 0
-        } : null
-      })
     } catch (parseError) {
       console.error('Error parsing Gemini response as JSON:', parseError)
       console.log('Raw response text:', text)

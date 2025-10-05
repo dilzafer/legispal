@@ -64,7 +64,7 @@ function TrendingBillsContent() {
         setLoading(true)
         console.log('Loading trending bills...')
         
-        const response = await fetch('/api/bills/trending?limit=20&analysis=true')
+        const response = await fetch('/api/bills/trending?limit=12&analysis=true')
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`)
         }
