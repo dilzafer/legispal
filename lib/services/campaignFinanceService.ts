@@ -4,7 +4,7 @@
  * to provide real-time campaign finance flow visualization data
  */
 
-import { fetchLobbyingFilings, type LDAFiling } from '../api/lda'
+import { fetchLDAFilings, type LDAFiling } from '../api/lda'
 
 const FEC_API_KEY = process.env.NEXT_PUBLIC_FEC_API_KEY || 'DEMO_KEY'
 const FEC_BASE_URL = 'https://api.open.fec.gov/v1'
@@ -350,7 +350,7 @@ export async function getCampaignFinanceDashboardData(): Promise<CampaignFinance
     const currentMonth = new Date().getMonth() + 1
     const filingPeriod = currentMonth <= 3 ? 'Q1' : currentMonth <= 6 ? 'Q2' : currentMonth <= 9 ? 'Q3' : 'Q4'
 
-    const lobbyingFilings = await fetchLobbyingFilings({
+    const lobbyingFilings = await fetchLDAFilings({
       filing_year: currentYear,
       filing_type: filingPeriod,
       page_size: 100
