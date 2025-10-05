@@ -1,10 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { GoogleGenerativeAI } from '@google/generative-ai'
+import { dashboardCacheService } from '@/lib/firebase'
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '')
 
 export async function GET(request: NextRequest) {
   try {
+    // Try cache first
+    const cached = await dashboardCacheService.getCachedGeminiAnalysis('news')
+    if (cached) {
+      console.log('✅ Using cached Gemini news')
+      return NextResponse.json({
+        summary: cached.content,
+        groundingMetadata: cached.metadata,
+        _fromCache: true,
+        cachedAt: cached.cachedAt.toDate().toISOString(),
+      })
+    }
+
     if (!process.env.GEMINI_API_KEY || process.env.GEMINI_API_KEY === 'your_gemini_api_key_here') {
       return NextResponse.json({
         summary: "Recent congressional activity includes healthcare reform debates, infrastructure bill progress, and ongoing committee hearings on climate policy. Political tensions remain high as election season approaches.",
@@ -63,13 +76,18 @@ export async function GET(request: NextRequest) {
     // Extract grounding metadata if available
     const groundingMetadata = result.response.candidates?.[0]?.groundingMetadata
     
+    const metadata = groundingMetadata ? {
+      webSearchQueries: groundingMetadata.webSearchQueries || [],
+      groundingChunks: groundingMetadata.groundingChunks || [],
+      groundingSupports: groundingMetadata.groundingSupports || []
+    } : null
+    
+    // Cache the result
+    await dashboardCacheService.cacheGeminiAnalysis('news', text, metadata)
+    
     return NextResponse.json({
       summary: text,
-      groundingMetadata: groundingMetadata ? {
-        webSearchQueries: groundingMetadata.webSearchQueries || [],
-        groundingChunks: groundingMetadata.groundingChunks || [],
-        groundingSupports: groundingMetadata.groundingSupports || []
-      } : null
+      groundingMetadata: metadata
     })
   } catch (error) {
     console.error('Error getting news summary from Gemini:', error)
