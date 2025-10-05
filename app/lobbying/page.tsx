@@ -1,12 +1,14 @@
 'use client'
 
 import { motion, AnimatePresence } from 'framer-motion'
-import { MessageCircle, Search, Filter, ArrowLeft, ChevronDown, ChevronUp, DollarSign, Calendar, Building, Target, Loader2 } from 'lucide-react'
+import { MessageCircle, Search, Filter, ArrowLeft, ChevronDown, ChevronUp, DollarSign, Calendar, Building, Target, Loader2, Shield, User, ChevronRight } from 'lucide-react'
 import Link from 'next/link'
 import { useState, useEffect } from 'react'
 import BillDashboardScan from '@/components/Dashboard/BillDashboardScan'
 import { BillDashboardProvider, useBillDashboard } from '@/lib/useBillDashboard'
 import { mockBillData } from '@/lib/mockBillData'
+import EthicsAnalysisPopup from '@/components/Lobbying/EthicsAnalysisPopup'
+import { LobbyistProfile } from '@/lib/api/workers'
 
 interface LobbyingActivity {
   id: string
@@ -41,10 +43,13 @@ function LobbyingContent() {
   const [filterCategory, setFilterCategory] = useState<string>('all')
   const [filterTarget, setFilterTarget] = useState<string>('all')
   const [expandedActivity, setExpandedActivity] = useState<string | null>(null)
+  const [expandedLobbyists, setExpandedLobbyists] = useState<Set<string>>(new Set())
   const [activities, setActivities] = useState<LobbyingActivity[]>([])
   const [stats, setStats] = useState<LobbyingStats | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [ethicsPopupOpen, setEthicsPopupOpen] = useState(false)
+  const [selectedLobbyistProfile, setSelectedLobbyistProfile] = useState<LobbyistProfile | null>(null)
   const { openBillDashboard } = useBillDashboard()
 
   // Fetch lobbying data on mount
@@ -153,6 +158,39 @@ function LobbyingContent() {
 
   const toggleExpanded = (activityId: string) => {
     setExpandedActivity(expandedActivity === activityId ? null : activityId)
+  }
+
+  const toggleLobbyistExpanded = (activityId: string) => {
+    const newExpanded = new Set(expandedLobbyists)
+    if (newExpanded.has(activityId)) {
+      newExpanded.delete(activityId)
+    } else {
+      newExpanded.add(activityId)
+    }
+    setExpandedLobbyists(newExpanded)
+  }
+
+  const handleAnalyzeEthics = (activity: LobbyingActivity) => {
+    const lobbyistProfile: LobbyistProfile = {
+      name: activity.lobbyist,
+      firm: activity.lobbyingFirm,
+      client: activity.client,
+      amount: activity.amount,
+      issue: activity.issue,
+      description: activity.description,
+      relatedBills: activity.relatedBills,
+      disclosureDate: activity.disclosureDate,
+      category: activity.category,
+      target: activity.target,
+      status: activity.status
+    }
+    setSelectedLobbyistProfile(lobbyistProfile)
+    setEthicsPopupOpen(true)
+  }
+
+  const closeEthicsPopup = () => {
+    setEthicsPopupOpen(false)
+    setSelectedLobbyistProfile(null)
   }
 
   return (
@@ -456,6 +494,95 @@ function LobbyingContent() {
                       </motion.div>
                     )}
                   </AnimatePresence>
+
+                  {/* Expandable Lobbyist Details */}
+                  <div className="border-t border-white/10">
+                    <button
+                      onClick={() => toggleLobbyistExpanded(activity.id)}
+                      className="w-full p-4 hover:bg-slate-800/50 transition-colors flex items-center justify-between"
+                    >
+                      <div className="flex items-center gap-3">
+                        <User className="text-gray-400" size={20} />
+                        <span className="text-white font-medium">Lobbyist Details</span>
+                      </div>
+                      {expandedLobbyists.has(activity.id) ? 
+                        <ChevronUp className="text-gray-400" size={20} /> : 
+                        <ChevronRight className="text-gray-400" size={20} />
+                      }
+                    </button>
+                    
+                    <AnimatePresence>
+                      {expandedLobbyists.has(activity.id) && (
+                        <motion.div
+                          initial={{ height: 0, opacity: 0 }}
+                          animate={{ height: 'auto', opacity: 1 }}
+                          exit={{ height: 0, opacity: 0 }}
+                          transition={{ duration: 0.3 }}
+                          className="border-t border-white/5"
+                        >
+                          <div className="p-6 bg-slate-800/30">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                              <div>
+                                <h5 className="text-sm font-semibold text-gray-400 mb-2">Lobbyist Information</h5>
+                                <div className="space-y-2 text-sm">
+                                  <div>
+                                    <span className="text-gray-400">Name:</span>
+                                    <span className="text-white ml-2">{activity.lobbyist}</span>
+                                  </div>
+                                  <div>
+                                    <span className="text-gray-400">Firm:</span>
+                                    <span className="text-white ml-2">{activity.lobbyingFirm}</span>
+                                  </div>
+                                  <div>
+                                    <span className="text-gray-400">Client:</span>
+                                    <span className="text-white ml-2">{activity.client}</span>
+                                  </div>
+                                </div>
+                              </div>
+                              
+                              <div>
+                                <h5 className="text-sm font-semibold text-gray-400 mb-2">Activity Details</h5>
+                                <div className="space-y-2 text-sm">
+                                  <div>
+                                    <span className="text-gray-400">Amount:</span>
+                                    <span className="text-green-400 ml-2 font-semibold">
+                                      {formatAmount(activity.amount)}
+                                    </span>
+                                  </div>
+                                  <div>
+                                    <span className="text-gray-400">Period:</span>
+                                    <span className="text-white ml-2">{activity.quarter} {activity.year}</span>
+                                  </div>
+                                  <div>
+                                    <span className="text-gray-400">Status:</span>
+                                    <span className={`ml-2 px-2 py-1 rounded-full text-xs ${getStatusColor(activity.status)}`}>
+                                      {activity.status}
+                                    </span>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                            
+                            <div className="mt-6 pt-4 border-t border-white/10">
+                              <div className="flex items-center justify-between">
+                                <h5 className="text-sm font-semibold text-gray-400">Ethics Analysis</h5>
+                                <button
+                                  onClick={() => handleAnalyzeEthics(activity)}
+                                  className="flex items-center gap-2 px-4 py-2 bg-blue-500/20 hover:bg-blue-500/30 text-blue-400 rounded-lg transition-colors text-sm"
+                                >
+                                  <Shield size={16} />
+                                  Analyze Ethics
+                                </button>
+                              </div>
+                              <p className="text-xs text-gray-500 mt-2">
+                                Get AI-powered analysis of transparency, compliance, and ethical concerns using Cloudflare Workers AI
+                              </p>
+                            </div>
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
                 </motion.div>
               ))}
             </div>
@@ -496,6 +623,13 @@ function LobbyingContent() {
 
       {/* Bill Dashboard Overlay */}
       <BillDashboardScan />
+
+      {/* Ethics Analysis Popup */}
+      <EthicsAnalysisPopup
+        isOpen={ethicsPopupOpen}
+        onClose={closeEthicsPopup}
+        lobbyistProfile={selectedLobbyistProfile}
+      />
     </div>
   )
 }
