@@ -12,7 +12,13 @@
     "type": "git",
     "url": "git+https://github.com/dilzafer/oversightusa.git"
   },
-  "keywords": ["legislative", "tracking", "democracy", "bills", "congress"],
+  "keywords": [
+    "legislative",
+    "tracking",
+    "democracy",
+    "bills",
+    "congress"
+  ],
   "author": "",
   "license": "ISC",
   "bugs": {

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { GoogleGenerativeAI } from '@google/generative-ai'
+import { GoogleGenerativeAI, DynamicRetrievalMode } from '@google/generative-ai'
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '')
 
@@ -75,11 +75,11 @@ export async function GET(request: NextRequest) {
 
     // Use legacy google_search_retrieval with dynamic mode for more reliable grounding
     const result = await model.generateContent({
-      contents: prompt,
+      contents: [{ role: 'user', parts: [{ text: prompt }] }],
       tools: [{
         googleSearchRetrieval: {
           dynamicRetrievalConfig: {
-            mode: "MODE_DYNAMIC",
+            mode: DynamicRetrievalMode.MODE_DYNAMIC,
             dynamicThreshold: 0.5 // Lower threshold to ensure search happens
           }
         }

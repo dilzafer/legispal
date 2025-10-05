@@ -43,13 +43,11 @@ export async function GET(request: NextRequest) {
     Keep it concise (2-3 sentences) and factual. Include specific dates when possible.
     `
 
-    // Enable Google Search grounding for real-time news
+    // Generate content (grounding removed - use the main gemini.ts API instead for grounding)
     const result = await model.generateContent({
       contents: [{
+        role: 'user',
         parts: [{ text: prompt }]
-      }],
-      tools: [{
-        googleSearch: {}
       }],
       generationConfig: {
         temperature: 0.7,

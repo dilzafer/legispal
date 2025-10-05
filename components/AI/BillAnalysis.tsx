@@ -31,7 +31,7 @@ const TextWithCitations = ({ text, groundingMetadata }: { text: string, groundin
       .map(i => {
         const chunk = chunks[i]
         const uri = chunk?.web?.uri
-        const title = chunk?.web?.title
+        const title = chunk?.web?.title || 'Source'
         if (uri) {
           const citationIndex = i + 1
           citationMap.set(citationIndex, { uri, title, index: citationIndex })
