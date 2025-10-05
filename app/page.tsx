@@ -18,8 +18,8 @@ export default function Dashboard() {
         animate={{ opacity: 1, y: 0 }}
         className="mb-8"
       >
-        <h1 className="text-3xl font-bold text-white mb-2">Democracy Dashboard</h1>
-        <p className="text-gray-400">Real-time insights into government activity</p>
+        <h1 className="text-3xl font-bold text-white mb-2">Congressional Oversight at Your Fingertips</h1>
+        <p className="text-gray-400">We built a truth engine for democracy.</p>
       </motion.div>
 
       <QuickStats />
