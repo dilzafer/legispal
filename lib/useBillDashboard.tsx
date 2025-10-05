@@ -29,15 +29,19 @@ export function BillDashboardProvider({ children }: { children: ReactNode }) {
       setLoading(true)
 
       try {
-        // Parse bill ID - supports two formats:
+        // Parse bill ID - supports multiple formats:
         // 1. New format: "118-HR-5615" (congress-type-number)
-        // 2. Legacy format: "HR-2024" or "S-3041" (type-number, assumes current congress)
+        // 2. Legacy dash format: "HR-2024" or "S-3041" (type-number, assumes current congress)
+        // 3. Dot format: "HR.5349" or "S.1234" (type.number, assumes current congress)
+        // 4. Congress dot format: "118-HR.5349" (congress-type.number)
         let congress = 118 // Default to current congress
         let typePrefix: string
         let number: string
 
         const newFormatMatch = selectedBillId.match(/^(\d+)-([A-Z]+)-(\d+)$/)
-        const legacyFormatMatch = selectedBillId.match(/^([A-Z]+)-(\d+)$/)
+        const legacyDashMatch = selectedBillId.match(/^([A-Z]+)-(\d+)$/)
+        const dotFormatMatch = selectedBillId.match(/^([A-Z]+)\.(\d+)$/)
+        const congressDotMatch = selectedBillId.match(/^(\d+)-([A-Z]+)\.(\d+)$/)
 
         if (newFormatMatch) {
           // New format with congress number
@@ -45,9 +49,20 @@ export function BillDashboardProvider({ children }: { children: ReactNode }) {
           congress = parseInt(congressNum, 10)
           typePrefix = type
           number = billNum
-        } else if (legacyFormatMatch) {
-          // Legacy format without congress number
-          const [, type, billNum] = legacyFormatMatch
+        } else if (congressDotMatch) {
+          // Congress dot format
+          const [, congressNum, type, billNum] = congressDotMatch
+          congress = parseInt(congressNum, 10)
+          typePrefix = type
+          number = billNum
+        } else if (legacyDashMatch) {
+          // Legacy dash format without congress number
+          const [, type, billNum] = legacyDashMatch
+          typePrefix = type
+          number = billNum
+        } else if (dotFormatMatch) {
+          // Dot format without congress number
+          const [, type, billNum] = dotFormatMatch
           typePrefix = type
           number = billNum
         } else {
