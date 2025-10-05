@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { fetchNewsDataNews } from '@/lib/services/newsDataService'
 
+export const dynamic = 'force-dynamic'
 export const revalidate = 900 // Revalidate every 15 minutes
 
 export async function GET(request: NextRequest) {
   try {
-    const { searchParams } = new URL(request.url)
+    const { searchParams } = request.nextUrl
     const limit = parseInt(searchParams.get('limit') || '6')
     const apiKey = process.env.NEXT_PUBLIC_NEW_NEWS_API_KEY
 

@@ -168,7 +168,7 @@ export default function MoneyFlow() {
                 data={{
                   nodes: financeData.nodes.map((node, idx) => ({
                     ...node,
-                    depth: node.depth ?? (idx < 4 ? 0 : 1)
+                    depth: (node as any).depth ?? (idx < 4 ? 0 : 1)
                   })),
                   links: financeData.links
                 }}

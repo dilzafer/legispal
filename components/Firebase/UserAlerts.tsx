@@ -19,6 +19,7 @@ export default function UserAlerts({ userId = 'demo-user' }: UserAlertsProps) {
 
   useEffect(() => {
     loadAlerts()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId])
 
   const loadAlerts = async () => {
