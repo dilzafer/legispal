@@ -6,10 +6,74 @@ import { useState, useEffect } from 'react'
 import { getLegislativeAnalysis, getRecentNewsSummary, LegislativeAnalysis, NewsSummary, addCitationsToText, GroundingMetadata } from '@/lib/geminiService'
 
 
+// Component to render markdown text with bold, italic, and other basic formatting
+const MarkdownText = ({ text, className = '' }: { text: string, className?: string }) => {
+  // Parse markdown patterns and convert to React elements
+  const parseMarkdown = (text: string) => {
+    const parts: (string | JSX.Element)[] = []
+    let currentIndex = 0
+    let key = 0
+
+    // Regex patterns for markdown
+    const boldPattern = /\*\*([^*]+)\*\*/g
+    const italicPattern = /\*([^*]+)\*/g
+
+    // First handle bold (double asterisks)
+    let match: RegExpExecArray | null
+    const segments: Array<{ start: number, end: number, content: string, type: 'bold' | 'text' }> = []
+
+    // Find all bold segments
+    while ((match = boldPattern.exec(text)) !== null) {
+      segments.push({
+        start: match.index,
+        end: match.index + match[0].length,
+        content: match[1],
+        type: 'bold'
+      })
+    }
+
+    // Sort segments by start position
+    segments.sort((a, b) => a.start - b.start)
+
+    // Build the result
+    segments.forEach((segment, index) => {
+      // Add text before this segment
+      if (segment.start > currentIndex) {
+        const textBefore = text.slice(currentIndex, segment.start)
+        if (textBefore) {
+          parts.push(textBefore)
+        }
+      }
+
+      // Add the formatted segment
+      if (segment.type === 'bold') {
+        parts.push(
+          <strong key={`bold-${key++}`} className="font-semibold text-white">
+            {segment.content}
+          </strong>
+        )
+      }
+
+      currentIndex = segment.end
+    })
+
+    // Add remaining text
+    if (currentIndex < text.length) {
+      parts.push(text.slice(currentIndex))
+    }
+
+    return parts.length > 0 ? parts : [text]
+  }
+
+  const elements = parseMarkdown(text)
+
+  return <span className={className}>{elements}</span>
+}
+
 // Component to render text with clickable citations
 const TextWithCitations = ({ text, groundingMetadata }: { text: string, groundingMetadata?: GroundingMetadata | null }) => {
   if (!groundingMetadata || !groundingMetadata.groundingSupports || !groundingMetadata.groundingChunks) {
-    return <span>{text}</span>
+    return <MarkdownText text={text} />
   }
 
   const supports = groundingMetadata.groundingSupports
@@ -49,7 +113,7 @@ const TextWithCitations = ({ text, groundingMetadata }: { text: string, groundin
 
   // Parse the result to make citations clickable
   const parts = result.split(/(\[\d+\])/g)
-  
+
   return (
     <span>
       {parts.map((part, index) => {
@@ -72,7 +136,8 @@ const TextWithCitations = ({ text, groundingMetadata }: { text: string, groundin
             )
           }
         }
-        return part
+        // Apply markdown formatting to text parts
+        return <MarkdownText key={index} text={part} />
       })}
     </span>
   )
@@ -325,7 +390,9 @@ export default function BillAnalysis() {
                 className="flex items-start gap-3"
               >
                 <AlertCircle size={14} className="text-yellow-400 mt-0.5 flex-shrink-0" />
-                <p className="text-sm text-gray-300">{prediction}</p>
+                <p className="text-sm text-gray-300">
+                  <MarkdownText text={prediction} />
+                </p>
               </motion.div>
             ))}
           </div>
