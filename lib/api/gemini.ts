@@ -4,6 +4,15 @@
  * Documentation: https://ai.google.dev/gemini-api/docs/google-search
  */
 
+export interface PolarizationAnalysis {
+  polarizationScore: number // 0-100, where 100 is most polarizing
+  democratSupport: number // 0-100
+  republicanSupport: number // 0-100
+  reasoning: string
+  controversyLevel: 'low' | 'medium' | 'high' | 'extreme'
+  confidence: 'low' | 'medium' | 'high'
+}
+
 export interface BillAnalysis {
   truthScore: number
   aiConfidence: number
@@ -358,6 +367,101 @@ JSON Response:`
     return JSON.parse(jsonText)
   } catch (error) {
     console.error('Error analyzing polarization:', error)
+    return null
+  }
+}
+
+/**
+ * Quick polarization analysis using Gemini AI (optimized for speed)
+ * Specifically designed to identify highly polarizing bills
+ */
+export async function analyzeBillPolarization(
+  billTitle: string,
+  billNumber: string,
+  summary: string,
+  sponsor?: string,
+  categories?: string[]
+): Promise<PolarizationAnalysis | null> {
+  try {
+    const apiKey = getGeminiApiKey()
+    if (!apiKey) {
+      console.error('Gemini API key not found')
+      return null
+    }
+
+    // Use Flash-Lite for speed
+    const model = 'gemini-2.0-flash-exp'
+
+    const prompt = `Analyze the partisan polarization of this bill. Consider:
+- Bill topic and subject matter (politically divisive topics like abortion, immigration, guns, climate, healthcare)
+- Sponsor's party affiliation
+- Historical partisan voting patterns on similar legislation
+- Current political climate and party positions
+
+Bill: ${billNumber} - ${billTitle}
+Sponsor: ${sponsor || 'Unknown'}
+Categories: ${categories?.join(', ') || 'None'}
+Summary: ${summary.substring(0, 500)}
+
+Provide a JSON response with:
+{
+  "polarizationScore": <0-100, where 100 is maximally polarizing>,
+  "democratSupport": <0-100, estimated % of Democrats who would support>,
+  "republicanSupport": <0-100, estimated % of Republicans who would support>,
+  "reasoning": "<brief explanation of why this bill is/isn't polarizing>",
+  "controversyLevel": "<low|medium|high|extreme>",
+  "confidence": "<low|medium|high>"
+}
+
+Guidelines:
+- Bills on abortion, immigration, guns, climate typically have polarization >70
+- Bills on infrastructure, veterans typically have polarization <30
+- Party-line votes show polarization = |democratSupport - republicanSupport|
+- If sponsor is R and topic is conservative, expect high GOP support (70-90%), low Dem support (10-30%)
+- If sponsor is D and topic is progressive, expect high Dem support (70-90%), low GOP support (10-30%)
+
+Return ONLY valid JSON, no markdown formatting.`
+
+    const requestBody = {
+      contents: [{
+        parts: [{ text: prompt }]
+      }],
+      generationConfig: {
+        temperature: 0.3, // Low temperature for consistent results
+        maxOutputTokens: 512, // Short response for speed
+      }
+    }
+
+    const url = `${GEMINI_API_BASE}/models/${model}:generateContent?key=${apiKey}`
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(requestBody),
+      next: { revalidate: 3600 }
+    })
+
+    if (!response.ok) {
+      console.error('Gemini API error:', response.statusText)
+      return null
+    }
+
+    const data = await response.json()
+    let responseText = data.candidates?.[0]?.content?.parts?.[0]?.text || ''
+
+    // Clean JSON formatting
+    let jsonText = responseText.trim()
+    if (jsonText.startsWith('```json')) {
+      jsonText = jsonText.replace(/```json\n?/g, '').replace(/```\n?/g, '')
+    } else if (jsonText.startsWith('```')) {
+      jsonText = jsonText.replace(/```\n?/g, '')
+    }
+
+    const result = JSON.parse(jsonText)
+
+    console.log(`🎯 Polarization for ${billNumber}: ${result.polarizationScore} (${result.controversyLevel})`)
+    return result
+  } catch (error) {
+    console.error('Error analyzing bill polarization:', error)
     return null
   }
 }

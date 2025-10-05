@@ -25,12 +25,28 @@ export default function PolarizingBills() {
     async function loadPolarizingBills() {
       try {
         setLoading(true)
-        const polarizingBills = await getPolarizingBills(3)
+        console.log('📥 Fetching polarizing bills from API...')
+
+        // Call the API route instead of directly calling the service
+        const response = await fetch('/api/bills/polarizing?limit=3')
+
+        if (!response.ok) {
+          throw new Error(`API returned ${response.status}`)
+        }
+
+        const data = await response.json()
+        console.log('📦 Received data:', data)
+
+        if (!data.success) {
+          throw new Error(data.error || 'API request failed')
+        }
+
+        const polarizingBills = data.bills || []
 
         // Transform to expected format
         const transformedBills: PolarizingBill[] = polarizingBills
-          .filter(bill => bill.id && bill.title && bill.publicSentiment)
-          .map(bill => ({
+          .filter((bill: any) => bill.id && bill.title && bill.publicSentiment)
+          .map((bill: any) => ({
             id: bill.id!,
             title: bill.title!,
             democratSupport: bill.publicSentiment!.democratSupport,
@@ -42,10 +58,11 @@ export default function PolarizingBills() {
             comments: bill.publicSentiment!.comments || 0
           }))
 
+        console.log(`✅ Transformed ${transformedBills.length} bills`)
         setBills(transformedBills)
         setError(null)
       } catch (err) {
-        console.error('Error loading polarizing bills:', err)
+        console.error('❌ Error loading polarizing bills:', err)
         setError('Failed to load polarizing bills')
       } finally {
         setLoading(false)

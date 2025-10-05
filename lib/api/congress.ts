@@ -424,32 +424,32 @@ export function estimatePolarizationFromMetadata(bill: CongressBill): {
 
   if (isBipartisan) {
     return {
-      democratSupport: 55 + Math.random() * 10,
-      republicanSupport: 55 + Math.random() * 10,
+      democratSupport: 60,
+      republicanSupport: 55,
       confidence: 'medium'
     }
   }
 
   if (isConservative) {
     return sponsorParty === 'R' || sponsorParty === 'Republican' ? {
-      democratSupport: 15 + Math.random() * 15,
-      republicanSupport: 75 + Math.random() * 20,
+      democratSupport: 20,
+      republicanSupport: 85,
       confidence: 'medium'
     } : {
-      democratSupport: 25 + Math.random() * 20,
-      republicanSupport: 65 + Math.random() * 15,
+      democratSupport: 35,
+      republicanSupport: 70,
       confidence: 'low'
     }
   }
 
   if (isLiberal) {
     return sponsorParty === 'D' || sponsorParty === 'Democratic' ? {
-      democratSupport: 75 + Math.random() * 20,
-      republicanSupport: 15 + Math.random() * 15,
+      democratSupport: 85,
+      republicanSupport: 20,
       confidence: 'medium'
     } : {
-      democratSupport: 65 + Math.random() * 15,
-      republicanSupport: 25 + Math.random() * 20,
+      democratSupport: 70,
+      republicanSupport: 35,
       confidence: 'low'
     }
   }
@@ -457,14 +457,14 @@ export function estimatePolarizationFromMetadata(bill: CongressBill): {
   // Default: slight lean toward sponsor's party
   if (sponsorParty === 'D' || sponsorParty === 'Democratic') {
     return {
-      democratSupport: 60 + Math.random() * 15,
-      republicanSupport: 40 + Math.random() * 15,
+      democratSupport: 65,
+      republicanSupport: 45,
       confidence: 'low'
     }
   } else if (sponsorParty === 'R' || sponsorParty === 'Republican') {
     return {
-      democratSupport: 40 + Math.random() * 15,
-      republicanSupport: 60 + Math.random() * 15,
+      democratSupport: 45,
+      republicanSupport: 65,
       confidence: 'low'
     }
   }
