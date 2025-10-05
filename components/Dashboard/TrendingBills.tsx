@@ -5,6 +5,7 @@ import { TrendingUp, Users, Calendar, AlertTriangle, ChevronRight } from 'lucide
 import { useBillDashboard } from '@/lib/useBillDashboard'
 import { useState, useEffect } from 'react'
 import { getTrendingBills } from '@/lib/services/billService'
+import Link from 'next/link'
 
 interface Bill {
   id: string
@@ -60,7 +61,6 @@ export default function TrendingBills() {
 
     loadTrendingBills()
   }, [])
-
   const getControversyColor = (level: string) => {
     switch (level) {
       case 'low': return 'text-green-400 bg-green-400/10'
@@ -141,22 +141,13 @@ export default function TrendingBills() {
           </div>
         </div>
         
-        <button className="text-truth-green hover:text-truth-green/80 transition-colors flex items-center gap-1 text-sm">
+        <Link href="/trending" className="text-truth-green hover:text-truth-green/80 transition-colors flex items-center gap-1 text-sm">
           View all
           <ChevronRight size={16} />
-        </button>
+        </Link>
       </div>
 
       <div className="space-y-4">
-        {bills.map((bill, index) => (
-          <motion.div
-            key={bill.id}
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: index * 0.1 }}
-            className="bg-slate-800/50 rounded-xl p-4 hover:bg-slate-800/70 transition-all cursor-pointer group"
-            onClick={() => openBillDashboard(bill.id)}
-          >
             <div className="flex items-start justify-between mb-3">
               <div className="flex-1">
                 <div className="flex items-center gap-3 mb-1">
@@ -204,7 +195,8 @@ export default function TrendingBills() {
                 </div>
               </div>
             </div>
-          </motion.div>
+            </motion.div>
+          </Link>
         ))}
       </div>
     </motion.div>

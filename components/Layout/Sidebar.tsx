@@ -5,12 +5,7 @@ import {
   Home, 
   TrendingUp, 
   Users, 
-  DollarSign, 
   MessageCircle, 
-  Bookmark,
-  Activity,
-  AlertCircle,
-  BarChart3,
   Shield
 } from 'lucide-react'
 import Link from 'next/link'
@@ -20,12 +15,8 @@ const sidebarItems = [
   { name: 'Dashboard', icon: Home, href: '/' },
   { name: 'Trending Bills', icon: TrendingUp, href: '/trending' },
   { name: 'My Representatives', icon: Users, href: '/representatives' },
-  { name: 'Campaign Finance', icon: DollarSign, href: '/finance' },
   { name: 'Lobbying Activity', icon: MessageCircle, href: '/lobbying' },
-  { name: 'Saved Searches', icon: Bookmark, href: '/saved' },
-  { name: 'Truth Score', icon: Shield, href: '/truth-score' },
-  { name: 'Citizen Pulse', icon: Activity, href: '/pulse' },
-  { name: 'Alerts', icon: AlertCircle, href: '/alerts' }
+  { name: 'Truth Score', icon: Shield, href: '/truth-score' }
 ]
 
 export default function Sidebar() {

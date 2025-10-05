@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react'
 import * as d3 from 'd3'
-import * as topojson from 'topojson-client'
+import { feature } from 'topojson-client'
 import { motion, AnimatePresence } from 'framer-motion'
 import { FileText, TrendingUp, DollarSign } from 'lucide-react'
 
@@ -80,7 +80,7 @@ export default function USMapInteractive() {
       .then(response => response.json())
       .then(us => {
         // Convert TopoJSON to GeoJSON
-        const statesGeo: any = topojson.feature(us, us.objects.states)
+        const statesGeo: any = feature(us, us.objects.states)
 
         // Draw state paths
         svg.append('g')

@@ -21,6 +21,7 @@
   "homepage": "https://github.com/dilzafer/oversightusa#readme",
   "description": "Real-time legislative tracking and transparency platform",
   "dependencies": {
+    "@google/generative-ai": "^0.24.1",
     "@tailwindcss/postcss": "^4.1.14",
     "@types/d3": "^7.4.3",
     "@types/node": "^24.6.2",
