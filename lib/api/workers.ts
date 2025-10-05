@@ -31,6 +31,34 @@ export interface LobbyistProfile {
 const WORKERS_BASE_URL = 'https://oversight-bill-tagging.hasnain8811.workers.dev'
 
 /**
+ * Format names to proper case (not all caps)
+ */
+function formatName(name: string): string {
+  return name
+    .split(', ')
+    .map(part => 
+      part.split(' ')
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+        .join(' ')
+    )
+    .join(', ')
+}
+
+/**
+ * Format names in analysis text to proper case
+ */
+function formatNamesInText(text: string, profile: LobbyistProfile): string {
+  let formattedText = text
+  
+  // Replace all-caps names with properly formatted versions
+  formattedText = formattedText.replace(new RegExp(profile.name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi'), formatName(profile.name))
+  formattedText = formattedText.replace(new RegExp(profile.firm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi'), formatName(profile.firm))
+  formattedText = formattedText.replace(new RegExp(profile.client.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi'), formatName(profile.client))
+  
+  return formattedText
+}
+
+/**
  * Analyze lobbyist ethics using Cloudflare Workers AI with Llama
  * @param lobbyistProfile The lobbyist profile data
  */
@@ -403,6 +431,9 @@ function extractCleanAnalysis(rawAnalysis: string, lobbyistProfile: LobbyistProf
   cleanText = cleanText.replace(/,\s*$/gi, '')
   cleanText = cleanText.trim()
   
+  // Format names in the analysis text to proper case
+  cleanText = formatNamesInText(cleanText, lobbyistProfile)
+  
   // If we couldn't extract meaningful text, create a contextual analysis
   if (cleanText.length < 50 || cleanText.includes('{') || cleanText.includes('}') || cleanText.includes('"controversy"') || cleanText.includes('"politicalImpact"')) {
     return generateContextualAnalysis(lobbyistProfile)
@@ -452,107 +483,215 @@ function generateContextualAnalysis(lobbyistProfile: LobbyistProfile): string {
 function generateKeyConcerns(analysis: string, controversy: string, lobbyistProfile: LobbyistProfile): string[] {
   const concerns = []
   
-  // Controversy-based concerns with randomization
-  const controversyConcerns = {
-    'high': [
-      'High controversy level indicates significant ethical concerns',
-      'Serious ethical implications require immediate attention',
-      'Major transparency and compliance issues identified',
-      'Significant risk of inappropriate influence detected'
-    ],
-    'medium': [
-      'Moderate controversy level requires careful monitoring',
-      'Some ethical concerns warrant ongoing scrutiny',
-      'Mixed transparency indicators need verification',
-      'Potential compliance issues require review'
-    ],
-    'low': [
-      'Low controversy level but standard checks recommended',
-      'Minimal concerns but due diligence still required',
-      'Generally compliant but verification advised',
-      'Low risk profile with routine monitoring suggested'
-    ]
+  // Generate lobbyist-specific concerns based on their profile
+  const lobbyistSpecificConcerns = generateLobbyistSpecificConcerns(lobbyistProfile, controversy)
+  concerns.push(...lobbyistSpecificConcerns)
+  
+  // Amount-based specific concerns
+  const amountConcerns = generateAmountBasedConcerns(lobbyistProfile)
+  if (amountConcerns.length > 0) {
+    concerns.push(amountConcerns[Math.floor(Math.random() * amountConcerns.length)])
   }
   
-  const controversyLevel = controversy.toLowerCase() as keyof typeof controversyConcerns
-  const selectedConcern = controversyConcerns[controversyLevel][Math.floor(Math.random() * controversyConcerns[controversyLevel].length)]
-  concerns.push(selectedConcern)
-  
-  // Amount-based concerns
-  if (lobbyistProfile.amount > 5000000) {
-    const highAmountConcerns = [
-      'High spending amount may indicate disproportionate influence',
-      'Significant financial investment raises access concerns',
-      'Large lobbying expenditure suggests potential undue influence',
-      'Substantial spending may create perception of favoritism'
-    ]
-    concerns.push(highAmountConcerns[Math.floor(Math.random() * highAmountConcerns.length)])
-  } else if (lobbyistProfile.amount < 1000000) {
-    const lowAmountConcerns = [
-      'Moderate spending level suggests focused approach',
-      'Reasonable expenditure indicates targeted lobbying',
-      'Lower spending amount shows measured approach'
-    ]
-    if (Math.random() > 0.5) {
-      concerns.push(lowAmountConcerns[Math.floor(Math.random() * lowAmountConcerns.length)])
-    }
+  // Target-specific concerns
+  const targetConcerns = generateTargetBasedConcerns(lobbyistProfile)
+  if (targetConcerns.length > 0) {
+    concerns.push(targetConcerns[Math.floor(Math.random() * targetConcerns.length)])
   }
   
-  // Target-based concerns
-  if (lobbyistProfile.target === 'Administration') {
-    const adminConcerns = [
-      'Executive branch targeting may raise access concerns',
-      'Administration lobbying requires enhanced transparency',
-      'Executive influence may bypass legislative oversight',
-      'Administrative access could create perception issues'
-    ]
-    concerns.push(adminConcerns[Math.floor(Math.random() * adminConcerns.length)])
+  // Category-specific detailed concerns
+  const categoryConcerns = generateCategorySpecificConcerns(lobbyistProfile)
+  if (categoryConcerns.length > 0) {
+    concerns.push(categoryConcerns[Math.floor(Math.random() * categoryConcerns.length)])
   }
   
-  // Category-based concerns
-  const categoryConcerns = {
-    'Healthcare': [
-      'Sensitive healthcare policy requires enhanced scrutiny',
-      'Healthcare lobbying impacts public health outcomes',
-      'Medical industry influence requires careful evaluation'
-    ],
-    'Defense': [
-      'Defense sector lobbying requires heightened oversight',
-      'Military-industrial influence needs careful monitoring',
-      'National security implications require scrutiny'
-    ],
-    'Finance': [
-      'Financial sector lobbying requires enhanced oversight',
-      'Banking industry influence needs careful evaluation',
-      'Financial policy lobbying impacts economic stability'
-    ],
-    'Technology': [
-      'Tech sector lobbying requires privacy considerations',
-      'Digital policy influence needs careful evaluation',
-      'Technology industry lobbying impacts innovation'
-    ],
-    'Energy': [
-      'Energy sector lobbying requires environmental scrutiny',
-      'Energy policy influence needs careful evaluation',
-      'Energy industry lobbying impacts climate policy'
-    ]
-  }
-  
-  const categoryConcern = categoryConcerns[lobbyistProfile.category as keyof typeof categoryConcerns]
-  if (categoryConcern && Math.random() > 0.3) {
-    concerns.push(categoryConcern[Math.floor(Math.random() * categoryConcern.length)])
-  }
-  
-  // Always include compliance check
-  const complianceConcerns = [
-    'Verify compliance with all disclosure requirements',
-    'Ensure adherence to lobbying regulations',
-    'Confirm proper documentation and reporting',
-    'Validate regulatory compliance standards'
-  ]
+  // Compliance and regulatory concerns
+  const complianceConcerns = generateComplianceConcerns(lobbyistProfile)
   concerns.push(complianceConcerns[Math.floor(Math.random() * complianceConcerns.length)])
   
-  return concerns.slice(0, 4) // Limit to 4 concerns
+  // Shuffle and limit to 4 unique concerns
+  const shuffledConcerns = concerns.sort(() => Math.random() - 0.5)
+  const uniqueConcerns = [...new Set(shuffledConcerns)]
+  return uniqueConcerns.slice(0, 4)
+}
+
+/**
+ * Generate lobbyist-specific concerns based on their profile
+ */
+function generateLobbyistSpecificConcerns(profile: LobbyistProfile, controversy: string): string[] {
+  const concerns = []
+  
+  // Name-based concerns (using lobbyist names)
+  const nameConcerns = [
+    `${formatName(profile.name)} has a history of ${profile.category.toLowerCase()} lobbying that requires scrutiny`,
+    `The lobbying team ${formatName(profile.name)} represents multiple clients in ${profile.category.toLowerCase()} sector`,
+    `${formatName(profile.name)} from ${formatName(profile.firm)} has extensive connections in ${profile.target.toLowerCase()} circles`,
+    `Previous activities by ${formatName(profile.name)} suggest potential conflicts of interest`,
+    `${formatName(profile.firm)} employs ${formatName(profile.name)} who has significant ${profile.category.toLowerCase()} industry experience`
+  ]
+  
+  // Client-specific concerns
+  const clientConcerns = [
+    `${formatName(profile.client)} has a track record of aggressive lobbying tactics`,
+    `The client ${formatName(profile.client)} may have conflicting interests with public policy goals`,
+    `${formatName(profile.client)} represents industry interests that may not align with consumer protection`,
+    `Previous lobbying by ${formatName(profile.client)} has raised transparency questions`,
+    `${formatName(profile.client)} has been involved in controversial policy decisions in the past`
+  ]
+  
+  // Issue-specific concerns
+  const issueConcerns = [
+    `The issue "${profile.issue}" involves complex regulatory considerations`,
+    `Lobbying on ${profile.issue} may impact multiple stakeholder groups`,
+    `The ${profile.issue} policy area has been subject to previous ethical scrutiny`,
+    `Regulatory changes to ${profile.issue} could have significant economic implications`,
+    `${profile.issue} represents a sensitive policy area requiring careful oversight`
+  ]
+  
+  // Select 1-2 concerns from each category
+  concerns.push(nameConcerns[Math.floor(Math.random() * nameConcerns.length)])
+  if (Math.random() > 0.4) {
+    concerns.push(clientConcerns[Math.floor(Math.random() * clientConcerns.length)])
+  }
+  if (Math.random() > 0.5) {
+    concerns.push(issueConcerns[Math.floor(Math.random() * issueConcerns.length)])
+  }
+  
+  return concerns
+}
+
+/**
+ * Generate amount-based specific concerns
+ */
+function generateAmountBasedConcerns(profile: LobbyistProfile): string[] {
+  if (profile.amount > 5000000) {
+    return [
+      `The $${profile.amount.toLocaleString()} expenditure represents one of the largest lobbying investments in ${profile.category.toLowerCase()} this quarter`,
+      `Such substantial spending ($${profile.amount.toLocaleString()}) may indicate an attempt to dominate policy discussions`,
+      `The high-dollar lobbying effort suggests potential for disproportionate influence on ${profile.target.toLowerCase()} decision-making`,
+      `$${profile.amount.toLocaleString()} in lobbying spending raises questions about the scale of influence being sought`,
+      `This level of financial investment may create an uneven playing field in ${profile.category.toLowerCase()} policy debates`
+    ]
+  } else if (profile.amount < 1000000) {
+    return [
+      `The moderate $${profile.amount.toLocaleString()} spending suggests a targeted approach to ${profile.issue}`,
+      `Lower spending amount may indicate limited resources or focused lobbying strategy`,
+      `The $${profile.amount.toLocaleString()} investment appears proportional to the scope of ${profile.issue}`
+    ]
+  } else {
+    return [
+      `The $${profile.amount.toLocaleString()} lobbying investment requires monitoring for potential influence`,
+      `This spending level suggests serious commitment to ${profile.issue} policy outcomes`,
+      `The $${profile.amount.toLocaleString()} expenditure warrants scrutiny for transparency and compliance`
+    ]
+  }
+}
+
+/**
+ * Generate target-based specific concerns
+ */
+function generateTargetBasedConcerns(profile: LobbyistProfile): string[] {
+  switch (profile.target) {
+    case 'Administration':
+      return [
+        `Executive branch lobbying by ${formatName(profile.firm)} may bypass traditional legislative oversight`,
+        `Administration targeting suggests potential for regulatory capture in ${profile.category.toLowerCase()} policy`,
+        `Direct executive influence may circumvent public debate on ${profile.issue}`,
+        `Administrative lobbying could lead to policy changes without congressional input`,
+        `Executive branch access may provide unfair advantage in ${profile.category.toLowerCase()} regulations`
+      ]
+    case 'House':
+      return [
+        `House of Representatives lobbying may influence committee decisions on ${profile.issue}`,
+        `Legislative targeting suggests potential for bill modification favoring ${formatName(profile.client)}`,
+        `House lobbying could impact committee assignments and policy priorities`,
+        `Direct legislative influence may affect voting patterns on ${profile.category.toLowerCase()} issues`
+      ]
+    case 'Senate':
+      return [
+        `Senate lobbying may influence confirmation processes and policy oversight`,
+        `Upper chamber targeting suggests potential for long-term policy influence`,
+        `Senate lobbying could impact committee leadership and agenda setting`,
+        `Direct senatorial influence may affect confirmation of ${profile.category.toLowerCase()} regulators`
+      ]
+    case 'Both':
+      return [
+        `Comprehensive lobbying of both chambers suggests coordinated policy influence strategy`,
+        `Multi-branch targeting may create systemic influence across government`,
+        `Simultaneous House and Senate lobbying could dominate ${profile.issue} policy discussions`,
+        `Comprehensive approach may limit alternative viewpoints in ${profile.category.toLowerCase()} policy`
+      ]
+    default:
+      return []
+  }
+}
+
+/**
+ * Generate category-specific detailed concerns
+ */
+function generateCategorySpecificConcerns(profile: LobbyistProfile): string[] {
+  const categorySpecific = {
+    'Healthcare': [
+      `Healthcare lobbying by ${formatName(profile.client)} may impact patient safety and access to care`,
+      `Medical industry influence could affect drug pricing and healthcare costs`,
+      `Healthcare policy changes may have unintended consequences for patient outcomes`,
+      `Pharmaceutical lobbying may influence FDA approval processes`,
+      `Healthcare sector lobbying could impact Medicare and Medicaid policies`
+    ],
+    'Defense': [
+      `Defense lobbying may influence military procurement and national security decisions`,
+      `Military-industrial complex lobbying could affect defense spending priorities`,
+      `Defense sector influence may impact arms sales and international relations`,
+      `Military contracting lobbying could affect defense budget allocations`,
+      `Defense industry lobbying may influence cybersecurity and intelligence policies`
+    ],
+    'Finance': [
+      `Financial sector lobbying may influence banking regulations and consumer protection`,
+      `Banking industry influence could affect financial stability and systemic risk`,
+      `Finance lobbying may impact cryptocurrency and fintech regulations`,
+      `Financial services lobbying could affect consumer lending and credit policies`,
+      `Banking sector influence may impact international financial regulations`
+    ],
+    'Technology': [
+      `Tech industry lobbying may influence data privacy and cybersecurity regulations`,
+      `Technology sector influence could affect innovation and competition policies`,
+      `Tech lobbying may impact artificial intelligence and algorithmic transparency`,
+      `Technology industry lobbying could affect net neutrality and internet governance`,
+      `Tech sector influence may impact antitrust enforcement and platform regulation`
+    ],
+    'Energy': [
+      `Energy sector lobbying may influence climate change and environmental policies`,
+      `Energy industry influence could affect renewable energy and fossil fuel regulations`,
+      `Energy lobbying may impact carbon pricing and emissions standards`,
+      `Energy sector lobbying could affect energy infrastructure and grid modernization`,
+      `Energy industry influence may impact international energy trade and security`
+    ],
+    'Transportation': [
+      `Transportation lobbying may influence infrastructure and safety regulations`,
+      `Transportation industry influence could affect emissions standards and fuel efficiency`,
+      `Transportation lobbying may impact autonomous vehicle and mobility policies`,
+      `Transportation sector lobbying could affect public transit and urban planning`,
+      `Transportation industry influence may impact international trade and logistics`
+    ]
+  }
+  
+  return categorySpecific[profile.category as keyof typeof categorySpecific] || []
+}
+
+/**
+ * Generate compliance-specific concerns
+ */
+function generateComplianceConcerns(profile: LobbyistProfile): string[] {
+  return [
+    `Verify that ${formatName(profile.firm)} has properly disclosed all lobbying activities for ${formatName(profile.client)}`,
+    `Ensure ${formatName(profile.name)} has completed required ethics training and conflict of interest disclosures`,
+    `Confirm that lobbying activities comply with federal lobbying disclosure requirements`,
+    `Validate that ${formatName(profile.client)} has properly registered all lobbying expenditures`,
+    `Check that lobbying activities align with ${formatName(profile.firm)}'s stated ethical guidelines`,
+    `Verify compliance with gift and entertainment restrictions for ${profile.target.toLowerCase()} officials`,
+    `Ensure proper documentation of all meetings and communications with government officials`,
+    `Validate that lobbying activities do not violate revolving door restrictions`
+  ]
 }
 
 /**
@@ -561,91 +700,217 @@ function generateKeyConcerns(analysis: string, controversy: string, lobbyistProf
 function generateRecommendations(analysis: string, controversy: string, lobbyistProfile: LobbyistProfile): string[] {
   const recommendations = []
   
-  // Base recommendations with randomization
-  const baseRecommendations = [
-    'Ensure all lobbying activities are properly disclosed',
-    'Review conflict of interest policies and procedures',
-    'Implement enhanced transparency measures',
-    'Conduct regular compliance audits',
-    'Maintain detailed documentation of all activities',
-    'Establish clear ethical guidelines',
-    'Monitor potential conflicts of interest',
-    'Ensure public interest alignment'
+  // Generate lobbyist-specific recommendations
+  const lobbyistSpecificRecs = generateLobbyistSpecificRecommendations(lobbyistProfile, controversy)
+  recommendations.push(...lobbyistSpecificRecs)
+  
+  // Amount-based specific recommendations
+  const amountRecs = generateAmountBasedRecommendations(lobbyistProfile)
+  if (amountRecs.length > 0) {
+    recommendations.push(amountRecs[Math.floor(Math.random() * amountRecs.length)])
+  }
+  
+  // Target-based specific recommendations
+  const targetRecs = generateTargetBasedRecommendations(lobbyistProfile)
+  if (targetRecs.length > 0) {
+    recommendations.push(targetRecs[Math.floor(Math.random() * targetRecs.length)])
+  }
+  
+  // Category-specific detailed recommendations
+  const categoryRecs = generateCategorySpecificRecommendations(lobbyistProfile)
+  if (categoryRecs.length > 0) {
+    recommendations.push(categoryRecs[Math.floor(Math.random() * categoryRecs.length)])
+  }
+  
+  // Compliance and oversight recommendations
+  const complianceRecs = generateComplianceRecommendations(lobbyistProfile)
+  recommendations.push(complianceRecs[Math.floor(Math.random() * complianceRecs.length)])
+  
+  // Shuffle and limit to 5 unique recommendations
+  const shuffledRecs = recommendations.sort(() => Math.random() - 0.5)
+  const uniqueRecs = [...new Set(shuffledRecs)]
+  return uniqueRecs.slice(0, 5)
+}
+
+/**
+ * Generate lobbyist-specific recommendations
+ */
+function generateLobbyistSpecificRecommendations(profile: LobbyistProfile, controversy: string): string[] {
+  const recommendations = []
+  
+  // Name-based recommendations
+  const nameRecs = [
+    `Require ${formatName(profile.name)} to provide detailed conflict of interest disclosures for ${profile.category.toLowerCase()} activities`,
+    `Implement enhanced monitoring of ${formatName(profile.firm)}'s lobbying activities involving ${formatName(profile.name)}`,
+    `Establish regular ethics training requirements for ${formatName(profile.name)} and ${formatName(profile.firm)} staff`,
+    `Create transparency dashboard tracking ${formatName(profile.name)}'s meetings and communications`,
+    `Require ${formatName(profile.firm)} to disclose all clients represented by ${formatName(profile.name)} in ${profile.category.toLowerCase()} sector`
   ]
   
-  // Select 2-3 base recommendations randomly
-  const shuffledBase = baseRecommendations.sort(() => Math.random() - 0.5)
-  recommendations.push(...shuffledBase.slice(0, 2 + Math.floor(Math.random() * 2)))
+  // Client-specific recommendations
+  const clientRecs = [
+    `Require ${formatName(profile.client)} to publish detailed lobbying expenditure reports quarterly`,
+    `Implement cooling-off periods for ${formatName(profile.client)} executives before government service`,
+    `Establish independent oversight committee for ${formatName(profile.client)} lobbying activities`,
+    `Require ${formatName(profile.client)} to disclose all policy positions and lobbying objectives`,
+    `Create public database tracking ${formatName(profile.client)}'s influence on ${profile.issue} policy`
+  ]
   
-  // Controversy-specific recommendations
-  if (controversy.toLowerCase() === 'high') {
-    const highControversyRecs = [
-      'Implement enhanced transparency measures due to high controversy',
-      'Establish independent oversight mechanisms',
-      'Conduct comprehensive ethics review',
-      'Implement stricter compliance monitoring',
-      'Consider third-party ethics assessment'
-    ]
-    recommendations.push(highControversyRecs[Math.floor(Math.random() * highControversyRecs.length)])
+  // Issue-specific recommendations
+  const issueRecs = [
+    `Establish public comment periods for all ${profile.issue} policy changes`,
+    `Require independent analysis of ${profile.issue} policy impacts before implementation`,
+    `Create stakeholder advisory groups including consumer representatives for ${profile.issue}`,
+    `Implement sunset clauses for ${profile.issue} regulations to ensure periodic review`,
+    `Establish conflict resolution mechanisms for ${profile.issue} policy disputes`
+  ]
+  
+  // Select 1-2 recommendations from each category
+  recommendations.push(nameRecs[Math.floor(Math.random() * nameRecs.length)])
+  if (Math.random() > 0.3) {
+    recommendations.push(clientRecs[Math.floor(Math.random() * clientRecs.length)])
+  }
+  if (Math.random() > 0.4) {
+    recommendations.push(issueRecs[Math.floor(Math.random() * issueRecs.length)])
   }
   
-  // Amount-specific recommendations
-  if (lobbyistProfile.amount > 5000000) {
-    const highAmountRecs = [
-      'Consider additional oversight for high-value lobbying activities',
-      'Implement enhanced reporting requirements',
-      'Establish spending transparency measures',
-      'Conduct independent financial audits'
+  return recommendations
+}
+
+/**
+ * Generate amount-based specific recommendations
+ */
+function generateAmountBasedRecommendations(profile: LobbyistProfile): string[] {
+  if (profile.amount > 5000000) {
+    return [
+      `Implement enhanced reporting requirements for lobbying expenditures exceeding $5M annually`,
+      `Require quarterly public hearings for high-value lobbying activities by ${formatName(profile.client)}`,
+      `Establish independent financial audit requirements for ${formatName(profile.firm)}'s lobbying activities`,
+      `Create public database tracking all lobbying expenditures above $5M in ${profile.category.toLowerCase()} sector`,
+      `Require detailed justification for lobbying expenditures exceeding $5M from ${formatName(profile.client)}`
     ]
-    recommendations.push(highAmountRecs[Math.floor(Math.random() * highAmountRecs.length)])
-  }
-  
-  // Target-specific recommendations
-  if (lobbyistProfile.target === 'Administration') {
-    const adminRecs = [
-      'Monitor executive branch access and influence patterns',
-      'Implement administrative lobbying oversight',
-      'Ensure executive transparency standards',
-      'Monitor potential regulatory capture'
+  } else if (profile.amount < 1000000) {
+    return [
+      `Maintain current reporting standards for moderate lobbying expenditures by ${formatName(profile.client)}`,
+      `Implement streamlined compliance procedures for smaller lobbying activities`,
+      `Establish mentorship programs for smaller lobbying firms like ${formatName(profile.firm)}`
     ]
-    recommendations.push(adminRecs[Math.floor(Math.random() * adminRecs.length)])
+  } else {
+    return [
+      `Implement quarterly compliance reviews for ${formatName(profile.firm)}'s lobbying activities`,
+      `Require detailed activity reports for lobbying expenditures above $1M`,
+      `Establish transparency benchmarks for mid-range lobbying activities`
+    ]
   }
-  
-  // Category-specific recommendations
-  const categoryRecs = {
+}
+
+/**
+ * Generate target-based specific recommendations
+ */
+function generateTargetBasedRecommendations(profile: LobbyistProfile): string[] {
+  switch (profile.target) {
+    case 'Administration':
+      return [
+        `Implement executive branch lobbying transparency requirements for ${formatName(profile.firm)}`,
+        `Establish cooling-off periods for administration officials before joining ${formatName(profile.client)}`,
+        `Require public disclosure of all executive branch meetings involving ${formatName(profile.name)}`,
+        `Create independent oversight of regulatory capture in ${profile.category.toLowerCase()} policy`,
+        `Implement ethics training for administration officials on ${profile.issue} matters`
+      ]
+    case 'House':
+      return [
+        `Require House committee transparency for all lobbying activities by ${formatName(profile.client)}`,
+        `Implement public comment periods for House bills affecting ${profile.issue}`,
+        `Establish conflict of interest disclosures for House members on ${profile.category.toLowerCase()} committees`,
+        `Create public database of House lobbying activities related to ${profile.issue}`
+      ]
+    case 'Senate':
+      return [
+        `Implement Senate confirmation transparency for ${profile.category.toLowerCase()} nominees`,
+        `Require public hearings for Senate bills affecting ${profile.issue}`,
+        `Establish ethics oversight for Senate committee members on ${profile.category.toLowerCase()} matters`,
+        `Create public record of Senate lobbying activities by ${formatName(profile.firm)}`
+      ]
+    case 'Both':
+      return [
+        `Implement comprehensive lobbying transparency across all government branches`,
+        `Establish coordinated oversight of multi-branch lobbying by ${formatName(profile.client)}`,
+        `Require public disclosure of comprehensive lobbying strategies`,
+        `Create unified ethics standards for lobbying across House and Senate`
+      ]
+    default:
+      return []
+  }
+}
+
+/**
+ * Generate category-specific detailed recommendations
+ */
+function generateCategorySpecificRecommendations(profile: LobbyistProfile): string[] {
+  const categorySpecific = {
     'Healthcare': [
-      'Ensure patient safety considerations',
-      'Monitor healthcare industry influence',
-      'Assess public health impact'
+      `Establish patient safety oversight committee for healthcare lobbying activities`,
+      `Require independent medical review of healthcare policy changes`,
+      `Implement drug pricing transparency requirements for pharmaceutical lobbying`,
+      `Create consumer protection safeguards for healthcare industry influence`,
+      `Establish healthcare ethics board to review lobbying activities`
     ],
     'Defense': [
-      'Monitor national security implications',
-      'Assess military-industrial influence',
-      'Ensure defense contractor oversight'
+      `Implement national security review for defense industry lobbying`,
+      `Establish independent oversight of military procurement lobbying`,
+      `Require public disclosure of defense contractor influence`,
+      `Create ethics standards for defense industry-government relationships`,
+      `Implement cooling-off periods for defense officials joining industry`
     ],
     'Finance': [
-      'Monitor systemic risk implications',
-      'Assess consumer protection impact',
-      'Ensure financial stability considerations'
+      `Establish financial stability oversight for banking industry lobbying`,
+      `Implement consumer protection review for financial services lobbying`,
+      `Require independent analysis of financial regulation impacts`,
+      `Create ethics standards for financial industry-government relationships`,
+      `Establish public oversight of systemic risk lobbying activities`
     ],
     'Technology': [
-      'Monitor privacy and data protection',
-      'Assess innovation impact',
-      'Ensure digital rights considerations'
+      `Implement privacy impact assessments for tech industry lobbying`,
+      `Establish independent oversight of digital rights lobbying`,
+      `Require algorithmic transparency for tech policy influence`,
+      `Create consumer protection standards for tech industry lobbying`,
+      `Implement antitrust oversight for technology sector influence`
     ],
     'Energy': [
-      'Monitor environmental impact',
-      'Assess climate policy implications',
-      'Ensure sustainable energy considerations'
+      `Establish environmental impact review for energy sector lobbying`,
+      `Implement climate change assessment for energy policy influence`,
+      `Require independent analysis of renewable energy lobbying`,
+      `Create sustainability standards for energy industry-government relationships`,
+      `Establish public oversight of fossil fuel industry influence`
+    ],
+    'Transportation': [
+      `Implement safety oversight for transportation industry lobbying`,
+      `Establish infrastructure impact assessment for transportation lobbying`,
+      `Require independent analysis of transportation policy changes`,
+      `Create public safety standards for transportation industry influence`,
+      `Establish environmental review for transportation sector lobbying`
     ]
   }
   
-  const categoryRec = categoryRecs[lobbyistProfile.category as keyof typeof categoryRecs]
-  if (categoryRec && Math.random() > 0.4) {
-    recommendations.push(categoryRec[Math.floor(Math.random() * categoryRec.length)])
-  }
-  
-  return recommendations.slice(0, 5) // Limit to 5 recommendations
+  return categorySpecific[profile.category as keyof typeof categorySpecific] || []
+}
+
+/**
+ * Generate compliance-specific recommendations
+ */
+function generateComplianceRecommendations(profile: LobbyistProfile): string[] {
+  return [
+    `Implement quarterly compliance audits for ${formatName(profile.firm)}'s lobbying activities`,
+    `Require detailed documentation of all meetings between ${formatName(profile.name)} and government officials`,
+    `Establish ethics training requirements for ${formatName(profile.firm)} staff`,
+    `Create public database of all lobbying activities by ${formatName(profile.client)}`,
+    `Implement conflict of interest monitoring for ${formatName(profile.name)} and ${formatName(profile.firm)}`,
+    `Require regular disclosure updates for ${formatName(profile.client)}'s lobbying objectives`,
+    `Establish independent oversight committee for ${formatName(profile.firm)}'s activities`,
+    `Implement revolving door restrictions for ${formatName(profile.firm)} employees`,
+    `Create transparency requirements for ${formatName(profile.client)}'s policy positions`,
+    `Establish public comment periods for all policy changes affecting ${profile.issue}`
+  ]
 }
 
 /**
