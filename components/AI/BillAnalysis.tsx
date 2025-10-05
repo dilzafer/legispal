@@ -273,18 +273,21 @@ export default function BillAnalysis() {
               Trending Bills
             </h4>
             <ul className="space-y-3">
-              {analysis.trendingBills.map((bill, index) => (
-                <motion.li
-                  key={index}
-                  initial={{ opacity: 0, x: -10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: index * 0.1 + 0.2 }}
-                  className="text-sm text-gray-300 flex items-start gap-2"
-                >
-                  <span className="text-democracy-gold mt-1 flex-shrink-0">•</span>
-                  <span>{bill.replace(/^\*\*(.*?):\*\*\s*/, '$1: ').replace(/^"(.*)"$/, '$1')}</span>
-                </motion.li>
-              ))}
+              {analysis.trendingBills.map((bill, index) => {
+                const billText = typeof bill === 'string' ? bill : String(bill);
+                return (
+                  <motion.li
+                    key={index}
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: index * 0.1 + 0.2 }}
+                    className="text-sm text-gray-300 flex items-start gap-2"
+                  >
+                    <span className="text-democracy-gold mt-1 flex-shrink-0">•</span>
+                    <span>{billText.replace(/^\*\*(.*?):\*\*\s*/, '$1: ').replace(/^"(.*)"$/, '$1')}</span>
+                  </motion.li>
+                );
+              })}
             </ul>
           </div>
         </div>

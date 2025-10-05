@@ -54,10 +54,10 @@ export default function FederalBillPage({ billData }: FederalBillPageProps) {
                 <div
                   className={`w-12 h-12 rounded-full flex items-center justify-center transition-all duration-300 ${
                     isCompleted
-                      ? 'bg-green-500 text-white'
+                      ? 'bg-green-500 text-white shadow-md shadow-green-500/30'
                       : isCurrent
-                        ? 'bg-white text-slate-900'
-                        : 'bg-gray-700 text-gray-400'
+                        ? 'bg-white text-slate-900 shadow-md shadow-white/30'
+                        : 'bg-gray-700 text-gray-400 shadow-sm shadow-gray-700/20'
                   }`}
                 >
                   {isCompleted ? (
@@ -72,9 +72,9 @@ export default function FederalBillPage({ billData }: FederalBillPageProps) {
               <div className={`mt-3 text-center ${
                 isCompleted ? 'text-green-400 font-semibold' : isCurrent ? 'text-white font-bold' : 'text-gray-500'
               }`}>
-                <div className="text-sm font-medium">{step.name}</div>
+                <div className="text-base tracking-wide">{step.name}</div>
                 {isCurrent && (
-                  <div className="text-xs text-gray-400 mt-1">Current</div>
+                  <div className="text-xs text-gray-400 mt-1 font-normal tracking-normal">Current</div>
                 )}
               </div>
             </div>
