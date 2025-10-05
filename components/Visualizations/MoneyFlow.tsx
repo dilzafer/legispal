@@ -109,13 +109,13 @@ export default function MoneyFlow() {
           </div>
         </div>
 
-        <div className="flex gap-4 text-xs items-center">
-          <div className="flex items-center gap-2">
+        <div className="flex gap-2 text-xs items-center ml-auto">
+          <div className="flex items-center gap-1.5">
             <Building2 size={14} className="text-gray-400" />
             <span className="text-gray-400">Donors</span>
           </div>
           <ArrowRight size={14} className="text-gray-400" />
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5">
             <User size={14} className="text-gray-400" />
             <span className="text-gray-400">Recipients</span>
           </div>
@@ -123,10 +123,10 @@ export default function MoneyFlow() {
           {!loading && (
             <button
               onClick={fetchFinanceData}
-              className="ml-2 p-1 hover:bg-white/10 rounded transition-colors"
+              className="ml-2 p-1 hover:bg-green-500/20 rounded transition-colors"
               title="Refresh data"
             >
-              <RefreshCw size={14} className="text-gray-400" />
+              <RefreshCw size={14} className="text-green-400 hover:text-green-300" />
             </button>
           )}
         </div>
