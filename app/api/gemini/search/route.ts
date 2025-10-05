@@ -19,10 +19,10 @@ export async function POST(request: NextRequest) {
     console.log(`🔍 Natural Language Search: Processing query "${query}"`)
 
     let searchResults = {
-      bills: [],
+      bills: [] as any[],
       analysis: `Search results for "${query}"`,
       source: 'Vector Search + AI Analysis',
-      groundingMetadata: null,
+      groundingMetadata: null as any,
       searchTime: 0
     }
 
@@ -73,8 +73,9 @@ ${billTitles}
 Provide a brief, natural explanation to answer the search query and any relevant news related to the bills. Focus on the semantic connection and legislative themes. Keep it concise (1-2 sentences).`
 
             const result = await model.generateContent({
-              contents: [{ parts: [{ text: prompt }] }],
-              tools: [{ googleSearch: {} }],
+              contents: [{
+        role: 'user',
+        parts: [{ text: prompt }] }],
               generationConfig: {
                 temperature: 0.3,
                 topP: 0.8,

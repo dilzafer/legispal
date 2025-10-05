@@ -17,6 +17,7 @@ export function useBillCache(billId: string | null, billType: 'state' | 'federal
     }
 
     async function loadCachedBill() {
+      if (!billId) return;
       setIsLoading(true);
       try {
         const bill = await billCacheService.getCachedBill(billId);

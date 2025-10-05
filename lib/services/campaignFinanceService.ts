@@ -178,7 +178,6 @@ Provide your answer as a JSON object with:
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           contents: [{ parts: [{ text: prompt }] }],
-          tools: [{ googleSearch: {} }],
           generationConfig: {
             temperature: 0.2,
             responseMimeType: 'application/json'
@@ -350,11 +349,13 @@ export async function getCampaignFinanceDashboardData(): Promise<CampaignFinance
     const currentMonth = new Date().getMonth() + 1
     const filingPeriod = currentMonth <= 3 ? 'Q1' : currentMonth <= 6 ? 'Q2' : currentMonth <= 9 ? 'Q3' : 'Q4'
 
-    const lobbyingFilings = await fetchLDAFilings({
+    const lobbyingResponse = await fetchLDAFilings({
       filing_year: currentYear,
       filing_type: filingPeriod,
       page_size: 100
     })
+
+    const lobbyingFilings = lobbyingResponse.results || []
 
     console.log(`📊 Fetched ${lobbyingFilings.length} lobbying filings`)
 

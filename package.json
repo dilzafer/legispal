@@ -49,6 +49,8 @@
     "typescript": "^5.9.3"
   },
   "devDependencies": {
-    "@types/topojson-client": "^3.1.5"
+    "@types/topojson-client": "^3.1.5",
+    "eslint": "^9.37.0",
+    "eslint-config-next": "^15.5.4"
   }
 }

@@ -1,5 +1,6 @@
 'use client'
 
+import React from 'react'
 import { motion } from 'framer-motion'
 import { Bot, Eye, AlertCircle, CheckCircle, XCircle, Brain, TrendingUp, Clock, Activity, ExternalLink } from 'lucide-react'
 import { useState, useEffect } from 'react'
@@ -10,7 +11,7 @@ import { getLegislativeAnalysis, getRecentNewsSummary, LegislativeAnalysis, News
 const MarkdownText = ({ text, className = '' }: { text: string, className?: string }) => {
   // Parse markdown patterns and convert to React elements
   const parseMarkdown = (text: string) => {
-    const parts: (string | JSX.Element)[] = []
+    const parts: (string | React.ReactElement)[] = []
     let currentIndex = 0
     let key = 0
 

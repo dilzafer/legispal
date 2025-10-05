@@ -169,8 +169,9 @@ export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ bioguideId: string }> }
 ) {
+  const { bioguideId } = await params
+
   try {
-    const { bioguideId } = await params
     const { searchParams } = new URL(request.url)
     const limit = parseInt(searchParams.get('limit') || '10', 10)
 
@@ -221,7 +222,7 @@ export async function GET(
       {
         error: 'Failed to fetch bills',
         bills: [],
-        bioguideId: params.bioguideId
+        bioguideId
       },
       { status: 500 }
     )

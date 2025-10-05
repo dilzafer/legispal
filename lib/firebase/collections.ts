@@ -173,9 +173,9 @@ export class SavedSearchesService {
 export class AlertsService {
   async getUserAlerts(userId: string, unreadOnly: boolean = false): Promise<UserAlert[]> {
     const filters = [{ field: 'userId', operator: '==' as const, value: userId }];
-    
+
     if (unreadOnly) {
-      filters.push({ field: 'read', operator: '==', value: false });
+      filters.push({ field: 'read', operator: '==' as const, value: false as any });
     }
 
     return firestoreService.queryDocuments<UserAlert>(

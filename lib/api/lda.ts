@@ -368,11 +368,12 @@ export async function calculateLobbyingStats(filings: LDAFiling[]): Promise<{
   averagePerFiling: number
 }> {
   const totalSpending = filings.reduce((sum, filing) => {
-    return sum + (filing.income || filing.expenses || 0)
+    const amount = Number(filing.income || filing.expenses || 0)
+    return sum + (isNaN(amount) ? 0 : amount)
   }, 0)
 
-  const uniqueClients = new Set(filings.map(f => f.client.client_id)).size
-  const uniqueRegistrants = new Set(filings.map(f => f.registrant.registrant_id)).size
+  const uniqueClients = new Set(filings.map(f => f.client.id)).size
+  const uniqueRegistrants = new Set(filings.map(f => f.registrant.id)).size
 
   return {
     totalSpending,

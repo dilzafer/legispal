@@ -75,9 +75,9 @@ export async function GET(request: NextRequest) {
 
     // Use Google Search grounding for real-time information
     const result = await model.generateContent({
-      contents: [{ parts: [{ text: prompt }] }],
-      tools: [{
-        googleSearch: {}
+      contents: [{
+        role: 'user',
+        parts: [{ text: prompt }]
       }],
       generationConfig: {
         temperature: 0.7,

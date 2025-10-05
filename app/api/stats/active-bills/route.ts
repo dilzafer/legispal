@@ -63,10 +63,8 @@ export async function GET(request: NextRequest) {
 
           const result = await model.generateContent({
             contents: [{
-              parts: [{ text: prompt }]
-            }],
-            tools: [{
-              googleSearch: {}
+        role: 'user',
+        parts: [{ text: prompt }]
             }],
             generationConfig: {
               temperature: 0.3,
@@ -163,10 +161,8 @@ export async function GET(request: NextRequest) {
 
     const result = await model.generateContent({
       contents: [{
+        role: 'user',
         parts: [{ text: prompt }]
-      }],
-      tools: [{
-        googleSearch: {}
       }],
       generationConfig: {
         temperature: 0.3,

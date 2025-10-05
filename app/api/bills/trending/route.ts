@@ -117,9 +117,6 @@ Return ONLY the JSON object, no other text.`
               role: 'user',
               parts: [{ text: prompt }]
             }],
-            tools: [{
-              googleSearch: {}
-            }],
             generationConfig: {
               temperature: 0.7,
               topP: 0.8,
@@ -274,10 +271,8 @@ Return ONLY the JSON object, no other text.`
 
     const result = await model.generateContent({
       contents: [{
+        role: 'user',
         parts: [{ text: prompt }]
-      }],
-      tools: [{
-        googleSearch: {}
       }],
       generationConfig: {
         temperature: 0.7,

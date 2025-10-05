@@ -73,14 +73,14 @@ function TrendingBillsContent() {
         console.log('Trending bills data:', data)
         
         // Transform the data to match our interface
-        const transformedBills: Bill[] = data.bills.map(bill => ({
+        const transformedBills: Bill[] = data.bills.map((bill: any) => ({
           id: bill.id || `${bill.type || 'HR'}-${bill.number || '0000'}`,
           title: bill.title || 'Untitled Bill',
           sponsor: bill.sponsor || bill.sponsors?.[0]?.fullName || 'Unknown Sponsor',
           date: bill.date || bill.introducedDate || new Date().toISOString().split('T')[0],
           trendScore: bill.trendScore || Math.floor(Math.random() * 40) + 60,
           summary: bill.summary || bill.description || bill.title || 'No summary available',
-          tags: bill.tags || bill.subjects?.legislativeSubjects?.slice(0, 3).map(s => s.name) || ['Legislation'],
+          tags: bill.tags || bill.subjects?.legislativeSubjects?.slice(0, 3).map((s: any) => s.name) || ['Legislation'],
           supportersCount: bill.supportersCount || Math.round((bill.trendScore || 70) * 100),
           opposersCount: bill.opposersCount || Math.round((bill.trendScore || 70) * 60),
           controversyLevel: bill.controversyLevel || 
