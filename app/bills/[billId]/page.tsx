@@ -2,17 +2,17 @@
 
 import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
-import { 
-  Bookmark, 
-  Share2, 
-  Bell,
-  UserCircle2
-} from 'lucide-react'
+import { UserCircle2 } from 'lucide-react'
 import type { Bill } from '@/backend/types/openstates'
+import { BillData } from '@/components/Dashboard/BillDashboard'
+import { getCompleteBillData } from '@/lib/services/billService'
+import FederalBillPage from '@/components/Dashboard/FederalBillPage'
 
 export default function BillDetailPage() {
   const params = useParams()
   const [bill, setBill] = useState<Bill | null>(null)
+  const [federalBill, setFederalBill] = useState<BillData | null>(null)
+  const [billType, setBillType] = useState<'state' | 'federal' | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -22,14 +22,37 @@ export default function BillDetailPage() {
         setLoading(true)
         // Decode the bill ID in case it was URL encoded
         const billId = decodeURIComponent(params.billId as string)
-        const response = await fetch(`/api/bills/${encodeURIComponent(billId)}`)
-        
-        if (!response.ok) {
-          throw new Error('Failed to fetch bill details')
-        }
 
-        const data = await response.json()
-        setBill(data)
+        // Check if it's a federal bill (format: 118-HR-5615)
+        const federalBillMatch = billId.match(/^(\d+)-([A-Z]+)-(\d+)$/)
+
+        if (federalBillMatch) {
+          // It's a federal bill
+          setBillType('federal')
+          const [, congressNum, type, number] = federalBillMatch
+          const congress = parseInt(congressNum, 10)
+          const billTypeStr = type.toLowerCase()
+
+          console.log(`Loading federal bill: ${type}-${number} from Congress ${congress}`)
+          const data = await getCompleteBillData(billTypeStr, number, congress)
+
+          if (data) {
+            setFederalBill(data)
+          } else {
+            throw new Error('Failed to fetch federal bill details')
+          }
+        } else {
+          // It's a state bill
+          setBillType('state')
+          const response = await fetch(`/api/bills/${encodeURIComponent(billId)}`)
+
+          if (!response.ok) {
+            throw new Error('Failed to fetch bill details')
+          }
+
+          const data = await response.json()
+          setBill(data)
+        }
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Unknown error')
       } finally {
@@ -44,7 +67,7 @@ export default function BillDetailPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-black">
+      <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-500 mx-auto mb-4"></div>
           <p className="text-gray-400">Loading bill details...</p>
@@ -53,15 +76,25 @@ export default function BillDetailPage() {
     )
   }
 
-  if (error || !bill) {
+  if (error || (!bill && !federalBill)) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-black">
+      <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
           <p className="text-red-500 text-xl mb-4">⚠ Error</p>
           <p className="text-gray-400">{error || 'Bill not found'}</p>
         </div>
       </div>
     )
+  }
+
+  // If it's a federal bill, render the federal bill page
+  if (billType === 'federal' && federalBill) {
+    return <FederalBillPage billData={federalBill} />
+  }
+
+  // Otherwise render state bill
+  if (!bill) {
+    return null
   }
 
   // Calculate vote statistics
@@ -151,21 +184,6 @@ export default function BillDetailPage() {
               </div>
             </div>
 
-            {/* Quick Actions */}
-            <div className="flex items-center space-x-2 order-2 md:order-none">
-              <button className="flex items-center space-x-2 px-3 py-2 bg-gray-800 text-white rounded-full hover:bg-gray-700 transition-colors text-sm border border-gray-700">
-                <Bookmark size={16} />
-                <span className="hidden sm:inline">Save</span>
-              </button>
-              <button className="flex items-center space-x-2 px-3 py-2 bg-gray-800 text-white rounded-full hover:bg-gray-700 transition-colors text-sm border border-gray-700">
-                <Share2 size={16} />
-                <span className="hidden sm:inline">Share</span>
-              </button>
-              <button className="flex items-center space-x-2 px-3 py-2 bg-gray-800 text-white rounded-full hover:bg-gray-700 transition-colors text-sm border border-gray-700">
-                <Bell size={16} />
-                <span className="hidden sm:inline">Alert me</span>
-              </button>
-            </div>
           </div>
         </div>
       </header>
