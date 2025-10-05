@@ -1,11 +1,12 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { 
-  Home, 
-  TrendingUp, 
-  Users, 
-  MessageCircle, 
+import {
+  Home,
+  TrendingUp,
+  Users,
+  MessageCircle,
   Shield
 } from 'lucide-react'
 import Link from 'next/link'
@@ -20,6 +21,23 @@ const sidebarItems = [
 ]
 
 export default function Sidebar() {
+  // State for animated democracy index
+  const [democracyIndex, setDemocracyIndex] = useState(78.50)
+
+  // Update democracy index every 2 seconds with random value around 78.5 (±1)
+  useEffect(() => {
+    const interval = setInterval(() => {
+      // Generate random value between 77.5 and 79.5
+      const randomValue = 78.5 + (Math.random() * 2 - 1)
+      // Round to 2 decimal places
+      const roundedValue = Math.round(randomValue * 100) / 100
+      setDemocracyIndex(roundedValue)
+    }, 2000) // Update every 2 seconds
+
+    // Cleanup interval on unmount
+    return () => clearInterval(interval)
+  }, [])
+
   return (
     <motion.div
       initial={{ x: -250 }}
@@ -67,7 +85,15 @@ export default function Sidebar() {
         <div className="bg-gradient-to-r from-gov-blue to-gov-red p-4 rounded-lg">
           <h3 className="text-white font-semibold text-sm mb-1">Democracy Index</h3>
           <div className="flex items-end gap-1">
-            <span className="text-2xl font-bold text-white">73</span>
+            <motion.span
+              className="text-2xl font-bold text-white"
+              key={democracyIndex}
+              initial={{ opacity: 0.7, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.5 }}
+            >
+              {democracyIndex.toFixed(2)}
+            </motion.span>
             <span className="text-xs text-white/70 mb-1">/100</span>
           </div>
           <p className="text-xs text-white/80 mt-1">Based on transparency metrics</p>
