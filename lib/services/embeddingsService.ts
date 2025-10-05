@@ -59,6 +59,9 @@ export async function generateBillEmbeddings(bills: any[]): Promise<BillEmbeddin
   
   for (const bill of bills) {
     try {
+      // Create proper bill ID: congress-type-number
+      const billId = `${bill.congress}-${bill.type.toUpperCase()}-${bill.number}`
+
       // Combine title, summary, and key metadata for embedding
       const fullText = [
         bill.title || '',
@@ -68,9 +71,9 @@ export async function generateBillEmbeddings(bills: any[]): Promise<BillEmbeddin
       ].join(' ')
 
       const embedding = await generateEmbedding(fullText)
-      
+
       embeddings.push({
-        billId: bill.billId,
+        billId,
         title: bill.title || 'Untitled Bill',
         summary: bill.summaries?.[0]?.text || '',
         fullText,
@@ -85,9 +88,10 @@ export async function generateBillEmbeddings(bills: any[]): Promise<BillEmbeddin
 
       // Add small delay to avoid rate limiting
       await new Promise(resolve => setTimeout(resolve, 100))
-      
+
     } catch (error) {
-      console.error(`❌ Error generating embedding for bill ${bill.billId}:`, error)
+      const billId = `${bill.congress}-${bill.type.toUpperCase()}-${bill.number}`
+      console.error(`❌ Error generating embedding for bill ${billId}:`, error)
     }
   }
   

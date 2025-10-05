@@ -32,22 +32,27 @@ export async function POST(request: NextRequest) {
       
       if (vectorSearchResult.results.length > 0) {
         // Transform vector search results to expected format
-        searchResults.bills = vectorSearchResult.results.map(result => ({
-          id: result.billId,
-          title: result.title,
-          sponsor: result.metadata.sponsor || 'Unknown',
-          date: result.metadata.date || new Date().toISOString().split('T')[0],
-          trendScore: Math.round(result.similarity * 100), // Convert similarity to 0-100 scale
-          summary: result.summary,
-          tags: result.metadata.tags || ['Legislation'],
-          supportersCount: Math.round(result.similarity * 5000) + 1000,
-          opposersCount: Math.round(result.similarity * 3000) + 500,
-          controversyLevel: 'medium',
-          billNumber: result.billId,
-          status: result.metadata.status || 'Introduced',
-          similarity: result.similarity,
-          relevanceReason: `Semantic similarity: ${(result.similarity * 100).toFixed(1)}% match`
-        }))
+        searchResults.bills = vectorSearchResult.results.map(result => {
+          // Ensure billId is in correct format (e.g., "HR-5615" or "118-HR-5615")
+          const billId = result.billId || `unknown-${Date.now()}`
+
+          return {
+            id: billId,
+            title: result.title,
+            sponsor: result.metadata.sponsor || 'Unknown',
+            date: result.metadata.date || new Date().toISOString().split('T')[0],
+            trendScore: Math.round(result.similarity * 100), // Convert similarity to 0-100 scale
+            summary: result.summary,
+            tags: result.metadata.tags || ['Legislation'],
+            supportersCount: Math.round(result.similarity * 5000) + 1000,
+            opposersCount: Math.round(result.similarity * 3000) + 500,
+            controversyLevel: 'medium',
+            billNumber: billId,
+            status: result.metadata.status || 'Introduced',
+            similarity: result.similarity,
+            relevanceReason: `Semantic similarity: ${(result.similarity * 100).toFixed(1)}% match`
+          }
+        })
 
         searchResults.analysis = `Found ${vectorSearchResult.results.length} bills semantically similar to "${query}" using vector search`
         searchResults.searchTime = vectorSearchResult.searchTime
@@ -65,7 +70,7 @@ export async function POST(request: NextRequest) {
 Here are the bills found using semantic similarity search:
 ${billTitles}
 
-Provide a brief, natural explanation of why these bills are relevant to the search query. Focus on the semantic connection and legislative themes. Keep it concise (1-2 sentences).`
+Provide a brief, natural explanation to answer the search query and any relevant news related to the bills. Focus on the semantic connection and legislative themes. Keep it concise (1-2 sentences).`
 
             const result = await model.generateContent({
               contents: [{ parts: [{ text: prompt }] }],
@@ -104,20 +109,25 @@ Provide a brief, natural explanation of why these bills are relevant to the sear
           )
         ).slice(0, maxResults)
 
-        searchResults.bills = matchingBills.map(bill => ({
-          id: bill.billId,
-          title: bill.title,
-          sponsor: bill.sponsors?.[0]?.fullName || 'Unknown',
-          date: bill.introducedDate || bill.latestAction?.actionDate || new Date().toISOString().split('T')[0],
-          trendScore: Math.floor(Math.random() * 40) + 60,
-          summary: bill.summaries?.[0]?.text || bill.title,
-          tags: bill.subjects?.legislativeSubjects?.slice(0, 3).map(s => s.name) || ['Legislation'],
-          supportersCount: Math.floor(Math.random() * 5000) + 1000,
-          opposersCount: Math.floor(Math.random() * 3000) + 500,
-          controversyLevel: 'medium',
-          billNumber: bill.billId,
-          status: bill.latestAction?.text || 'Introduced'
-        }))
+        searchResults.bills = matchingBills.map(bill => {
+          // Create proper bill ID: congress-type-number or type-number
+          const billId = `${bill.congress}-${bill.type.toUpperCase()}-${bill.number}`
+
+          return {
+            id: billId,
+            title: bill.title,
+            sponsor: bill.sponsors?.[0]?.fullName || 'Unknown',
+            date: bill.introducedDate || bill.latestAction?.actionDate || new Date().toISOString().split('T')[0],
+            trendScore: Math.floor(Math.random() * 40) + 60,
+            summary: bill.summaries?.[0]?.text || bill.title,
+            tags: bill.subjects?.legislativeSubjects?.slice(0, 3).map(s => s.name) || ['Legislation'],
+            supportersCount: Math.floor(Math.random() * 5000) + 1000,
+            opposersCount: Math.floor(Math.random() * 3000) + 500,
+            controversyLevel: 'medium',
+            billNumber: `${bill.type.toUpperCase()}.${bill.number}`,
+            status: bill.latestAction?.text || 'Introduced'
+          }
+        })
 
         searchResults.analysis = `Found ${searchResults.bills.length} bills matching "${query}" using keyword search`
         searchResults.source = 'Keyword Search Fallback'
@@ -128,20 +138,25 @@ Provide a brief, natural explanation of why these bills are relevant to the sear
       
       // Final fallback to basic search
       const recentBills = await fetchRecentBills(maxResults, 0)
-      searchResults.bills = recentBills.map(bill => ({
-        id: bill.billId,
-        title: bill.title,
-        sponsor: bill.sponsors?.[0]?.fullName || 'Unknown',
-        date: bill.introducedDate || bill.latestAction?.actionDate || new Date().toISOString().split('T')[0],
-        trendScore: Math.floor(Math.random() * 40) + 60,
-        summary: bill.summaries?.[0]?.text || bill.title,
-        tags: bill.subjects?.legislativeSubjects?.slice(0, 3).map(s => s.name) || ['Legislation'],
-        supportersCount: Math.floor(Math.random() * 5000) + 1000,
-        opposersCount: Math.floor(Math.random() * 3000) + 500,
-        controversyLevel: 'medium',
-        billNumber: bill.billId,
-        status: bill.latestAction?.text || 'Introduced'
-      }))
+      searchResults.bills = recentBills.map(bill => {
+        // Create proper bill ID: congress-type-number
+        const billId = `${bill.congress}-${bill.type.toUpperCase()}-${bill.number}`
+
+        return {
+          id: billId,
+          title: bill.title,
+          sponsor: bill.sponsors?.[0]?.fullName || 'Unknown',
+          date: bill.introducedDate || bill.latestAction?.actionDate || new Date().toISOString().split('T')[0],
+          trendScore: Math.floor(Math.random() * 40) + 60,
+          summary: bill.summaries?.[0]?.text || bill.title,
+          tags: bill.subjects?.legislativeSubjects?.slice(0, 3).map(s => s.name) || ['Legislation'],
+          supportersCount: Math.floor(Math.random() * 5000) + 1000,
+          opposersCount: Math.floor(Math.random() * 3000) + 500,
+          controversyLevel: 'medium',
+          billNumber: `${bill.type.toUpperCase()}.${bill.number}`,
+          status: bill.latestAction?.text || 'Introduced'
+        }
+      })
 
       searchResults.analysis = `Found ${searchResults.bills.length} recent bills (fallback mode)`
       searchResults.source = 'Fallback Search'
