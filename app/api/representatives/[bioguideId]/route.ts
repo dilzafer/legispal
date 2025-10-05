@@ -12,35 +12,46 @@ import {
  */
 async function fetchCommitteeMemberships(bioguideId: string): Promise<string[]> {
   try {
+    console.log(`🔍 Fetching committee memberships for ${bioguideId}...`)
+
     const response = await fetch(
       'https://raw.githubusercontent.com/unitedstates/congress-legislators/main/committee-membership-current.yaml',
       { next: { revalidate: 86400 } } // Cache for 24 hours
     )
 
-    if (!response.ok) return []
+    if (!response.ok) {
+      console.warn(`⚠️ Failed to fetch committee YAML: ${response.status}`)
+      return []
+    }
 
     const yamlText = await response.text()
+    console.log(`✅ Fetched committee YAML (${yamlText.length} chars)`)
 
-    // Simple YAML parsing for committee memberships
+    // Parse YAML structure: committees are top-level keys, members are nested
+    // Format: COMMITTEE_CODE:\n  - name: ...\n    bioguide: ID
     const committees: string[] = []
     const lines = yamlText.split('\n')
-    let inMemberSection = false
+
+    let currentCommitteeCode: string | null = null
+    let foundCount = 0
 
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i]
 
-      if (line.includes(bioguideId)) {
-        inMemberSection = true
+      // Check if this line is a committee code (starts at column 0, ends with :)
+      const committeeMatch = line.match(/^([A-Z]{2,6}):$/)
+      if (committeeMatch) {
+        currentCommitteeCode = committeeMatch[1]
         continue
       }
 
-      if (inMemberSection) {
-        if (line.match(/^[A-Z]\d{6}:/)) break
+      // Check if this line contains our bioguide ID
+      if (currentCommitteeCode && line.includes(`bioguide: ${bioguideId}`)) {
+        foundCount++
+        console.log(`✓ Found ${bioguideId} in committee ${currentCommitteeCode}`)
 
-        const match = line.match(/^\s*-\s*([A-Z]+)/)
-        if (match) {
-          const abbr = match[1]
-          const committeeMap: Record<string, string> = {
+        // Map committee code to full name
+        const committeeMap: Record<string, string> = {
             'HSAG': 'Agriculture',
             'HSAP': 'Appropriations',
             'HSAS': 'Armed Services',
@@ -80,16 +91,18 @@ async function fetchCommitteeMemberships(bioguideId: string): Promise<string[]> 
             'SSVA': 'Veterans\' Affairs'
           }
 
-          if (committeeMap[abbr]) {
-            committees.push(committeeMap[abbr])
-          }
+        if (committeeMap[currentCommitteeCode]) {
+          committees.push(committeeMap[currentCommitteeCode])
+        } else {
+          console.warn(`⚠️ Unknown committee code: ${currentCommitteeCode}`)
         }
       }
     }
 
+    console.log(`✅ Found ${foundCount} committees for ${bioguideId}: ${committees.join(', ') || 'None'}`)
     return committees
   } catch (error) {
-    console.error(`Error fetching committee memberships for ${bioguideId}:`, error)
+    console.error(`❌ Error fetching committee memberships for ${bioguideId}:`, error)
     return []
   }
 }
@@ -162,10 +175,10 @@ async function generateMemberBio(
  */
 export async function GET(
   request: NextRequest,
-  { params }: { params: { bioguideId: string } }
+  { params }: { params: Promise<{ bioguideId: string }> }
 ) {
   try {
-    const { bioguideId } = params
+    const { bioguideId } = await params
 
     console.log(`📡 Fetching detailed info for ${bioguideId}...`)
 
@@ -190,9 +203,6 @@ export async function GET(
     const yearsInOffice = calculateYearsInOffice(memberDetails)
     const party = normalizePartyName(memberDetails.partyName)
 
-    // Fetch committee memberships
-    const committeeMemberships = await fetchCommitteeMemberships(bioguideId)
-
     // Generate bio with Gemini
     const bio = await generateMemberBio(
       memberDetails.name,
@@ -205,7 +215,6 @@ export async function GET(
     return NextResponse.json({
       bio,
       yearsInOffice,
-      committeeMemberships,
       contactInfo: {
         phone: memberDetails.addressInformation?.phoneNumber || '',
         office: memberDetails.addressInformation?.officeAddress || '',

@@ -121,7 +121,6 @@ function RepresentativesContent() {
             ...rep,
             bio: data.bio || rep.bio,
             yearsInOffice: data.yearsInOffice || rep.yearsInOffice,
-            committeeMemberships: data.committeeMemberships || rep.committeeMemberships,
             contactInfo: {
               ...rep.contactInfo,
               ...data.contactInfo
@@ -385,15 +384,33 @@ function RepresentativesContent() {
                     className="border-t border-white/10"
                   >
                     <div className="p-6 space-y-6">
-                      {/* Committees */}
+                      {/* Legislative Info */}
                       <div>
-                        <h4 className="text-lg font-semibold text-white mb-3">Committee Memberships</h4>
-                        <div className="flex flex-wrap gap-2">
-                          {rep.committeeMemberships.map((committee, idx) => (
-                            <span key={idx} className="px-3 py-1 bg-slate-800 rounded-full text-sm text-gray-300">
-                              {committee}
-                            </span>
-                          ))}
+                        <h4 className="text-lg font-semibold text-white mb-3">Legislative Information</h4>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                          <div className="bg-slate-800/50 rounded-lg p-4 border border-white/5">
+                            <div className="text-sm text-gray-400 mb-1">Chamber</div>
+                            <div className="text-lg font-semibold text-white">{rep.chamber}</div>
+                            <div className="text-xs text-gray-400 mt-1">
+                              {rep.chamber === 'House' ? 'U.S. House of Representatives' : 'U.S. Senate'}
+                            </div>
+                          </div>
+                          <div className="bg-slate-800/50 rounded-lg p-4 border border-white/5">
+                            <div className="text-sm text-gray-400 mb-1">Party Affiliation</div>
+                            <div className={`text-lg font-semibold ${getPartyColor(rep.party).split(' ')[0]}`}>
+                              {rep.party}
+                            </div>
+                            <div className="text-xs text-gray-400 mt-1">
+                              {rep.state} {rep.district ? `• District ${rep.district}` : ''}
+                            </div>
+                          </div>
+                          <div className="bg-slate-800/50 rounded-lg p-4 border border-white/5">
+                            <div className="text-sm text-gray-400 mb-1">Experience</div>
+                            <div className="text-lg font-semibold text-white">
+                              {rep.yearsInOffice > 0 ? `${rep.yearsInOffice} years` : 'Current term'}
+                            </div>
+                            <div className="text-xs text-gray-400 mt-1">Time in office</div>
+                          </div>
                         </div>
                       </div>
 

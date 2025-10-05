@@ -167,10 +167,10 @@ async function transformBill(bill: SponsoredBill): Promise<RepresentativeBill> {
  */
 export async function GET(
   request: NextRequest,
-  { params }: { params: { bioguideId: string } }
+  { params }: { params: Promise<{ bioguideId: string }> }
 ) {
   try {
-    const { bioguideId } = params
+    const { bioguideId } = await params
     const { searchParams } = new URL(request.url)
     const limit = parseInt(searchParams.get('limit') || '10', 10)
 
