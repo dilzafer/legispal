@@ -78,12 +78,37 @@ body {
   .text-balance {
     text-wrap: balance;
   }
-  
+
   .glass-morphism {
     @apply backdrop-blur-lg bg-white/10 border border-white/20 shadow-lg;
   }
-  
+
   .truth-glow {
     @apply shadow-[0_0_25px_rgba(10,147,150,0.3)];
+  }
+
+  /* Custom scrollbar styles */
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-track {
+    background: rgba(30, 41, 59, 0.5);
+    border-radius: 4px;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background: rgb(51, 65, 85);
+    border-radius: 4px;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+    background: rgb(71, 85, 105);
+  }
+
+  /* Firefox scrollbar */
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: rgb(51, 65, 85) rgba(30, 41, 59, 0.5);
   }
 }

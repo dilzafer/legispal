@@ -191,7 +191,7 @@ export default function PolarizingBills() {
         </div>
       </div>
 
-      <div className="space-y-6">
+      <div className="space-y-6 max-h-[450px] overflow-y-auto pr-2 scrollbar-thin">
         {bills.length === 0 && !loading && (
           <div className="bg-slate-800/50 rounded-lg p-6 border border-yellow-500/20 text-center">
             <AlertTriangle className="mx-auto mb-3 text-yellow-400" size={32} />
