@@ -197,7 +197,7 @@ export default function BillDashboardScan() {
                   <section className="bg-slate-800/50 rounded-xl p-6 border border-white/10">
                     <h2 className="text-2xl font-bold text-white mb-4">Vote at a Glance</h2>
                     <div className="flex justify-between items-baseline mb-4">
-                      <p className="text-lg">
+                      <p className="text-lg text-white">
                         <span className="font-semibold text-green-400">
                           {billData.voteResults.passed ? 'Passed' : 'Failed'}
                         </span> ({billData.voteResults.chamber})
@@ -428,7 +428,7 @@ export default function BillDashboardScan() {
                   
                   <div className="mt-6 flex flex-wrap items-center justify-center md:justify-start gap-x-8 gap-y-4 text-center border-t border-gray-700 pt-6">
                     <div>
-                      <p className="text-2xl font-bold">{billData.publicSentiment.comments.toLocaleString()}</p>
+                      <p className="text-2xl font-bold text-white">{billData.publicSentiment.comments.toLocaleString()}</p>
                       <p className="text-xs text-gray-400 uppercase tracking-wider">Comments</p>
                     </div>
                     <div>
