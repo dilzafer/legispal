@@ -7,7 +7,7 @@ export default function ConditionalHeader() {
   const pathname = usePathname()
 
   // Hide header on pages that have their own headers
-  if (pathname === '/search' || pathname === '/trending' || pathname === '/lobbying' || pathname === '/representatives') {
+  if (pathname === '/search' || pathname === '/trending' || pathname === '/lobbying' || pathname === '/representatives' || pathname === '/about') {
     return null
   }
   

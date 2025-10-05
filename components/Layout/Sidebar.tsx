@@ -100,6 +100,12 @@ export default function Sidebar() {
           </div>
           <p className="text-xs text-white/80 mt-1">Based on transparency metrics</p>
         </div>
+        <Link
+          href="/about"
+          className="block mt-3 text-center text-xs text-gray-400 hover:text-gray-300 transition-colors"
+        >
+          About Us
+        </Link>
       </motion.div>
     </motion.div>
   )
