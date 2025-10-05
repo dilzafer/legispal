@@ -42,11 +42,18 @@ export default function InTheNews({ apiKey }: InTheNewsProps) {
         )
 
         if (!response.ok) {
+          // Handle News API limitations (426 = Upgrade Required for production)
+          if (response.status === 426) {
+            console.warn('News API requires paid plan for production deployment')
+            setError('News unavailable in production (News API limitation)')
+            setLoading(false)
+            return
+          }
           throw new Error(`HTTP error! status: ${response.status}`)
         }
 
         const data = await response.json()
-        
+
         if (data.status === 'ok') {
           setArticles(data.articles || [])
         } else {

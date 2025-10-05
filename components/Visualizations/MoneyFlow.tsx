@@ -82,7 +82,8 @@ export default function MoneyFlow() {
     )
   }
 
-  const formatCurrency = (amount: number): string => {
+  const formatCurrency = (amount: number | null | undefined): string => {
+    if (!amount || isNaN(amount)) return '$0'
     if (amount >= 1000000) {
       return `$${(amount / 1000000).toFixed(1)}M`
     } else if (amount >= 1000) {
@@ -174,7 +175,7 @@ export default function MoneyFlow() {
                   }}
                   labelStyle={{ color: '#ffffff' }}
                   itemStyle={{ color: '#ffffff' }}
-                  formatter={(value: number) => `$${value.toLocaleString()}`}
+                  formatter={(value: any) => formatCurrency(value)}
                 />
               </Sankey>
             </ResponsiveContainer>

@@ -193,10 +193,16 @@ Provide your answer as a JSON object with:
 
       if (text) {
         const result = JSON.parse(text)
-        const darkMoney = result.estimatedDarkMoney || trackedAmount * result.darkMoneyRatio
+        const darkMoney = result.estimatedDarkMoney || (trackedAmount * (result.darkMoneyRatio || 0.12))
 
-        console.log(`🤖 Gemini dark money estimate: $${darkMoney.toLocaleString()} (${(result.darkMoneyRatio * 100).toFixed(1)}%)`)
-        console.log(`   Reasoning: ${result.reasoning}`)
+        // Validate the result
+        if (isNaN(darkMoney) || darkMoney < 0) {
+          console.log('⚠️ Invalid Gemini response, using research-based estimate')
+          return trackedAmount * 0.12
+        }
+
+        console.log(`🤖 Gemini dark money estimate: $${darkMoney.toLocaleString()} (${((result.darkMoneyRatio || 0.12) * 100).toFixed(1)}%)`)
+        console.log(`   Reasoning: ${result.reasoning || 'N/A'}`)
 
         return darkMoney
       }
@@ -378,7 +384,7 @@ export async function getCampaignFinanceDashboardData(): Promise<CampaignFinance
     // Build Sankey diagram structure
     const { nodes, links } = buildSankeyData(sectorData, totalTracked)
 
-    console.log(`✅ Campaign finance data ready: $${totalTracked.toLocaleString()} tracked, $${darkMoney.toLocaleString()} dark money estimated`)
+    console.log(`✅ Campaign finance data ready: $${(totalTracked || 0).toLocaleString()} tracked, $${(darkMoney || 0).toLocaleString()} dark money estimated`)
 
     return {
       nodes,
