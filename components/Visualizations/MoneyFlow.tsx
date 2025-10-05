@@ -12,30 +12,30 @@ import {
 
 const data = {
   nodes: [
-    { id: 0, name: 'Oil & Gas' },
-    { id: 1, name: 'Pharmaceuticals' },
-    { id: 2, name: 'Tech Companies' },
-    { id: 3, name: 'Defense Contractors' },
-    { id: 4, name: 'Sen. Johnson (R)' },
-    { id: 5, name: 'Sen. Smith (D)' },
-    { id: 6, name: 'Rep. Davis (R)' },
-    { id: 7, name: 'Rep. Wilson (D)' },
-    { id: 8, name: 'Energy Committee' },
-    { id: 9, name: 'Health Committee' },
+    { id: 0, name: 'Oil & Gas', key: 'node-0' },
+    { id: 1, name: 'Pharmaceuticals', key: 'node-1' },
+    { id: 2, name: 'Tech Companies', key: 'node-2' },
+    { id: 3, name: 'Defense Contractors', key: 'node-3' },
+    { id: 4, name: 'Sen. Johnson (R)', key: 'node-4' },
+    { id: 5, name: 'Sen. Smith (D)', key: 'node-5' },
+    { id: 6, name: 'Rep. Davis (R)', key: 'node-6' },
+    { id: 7, name: 'Rep. Wilson (D)', key: 'node-7' },
+    { id: 8, name: 'Energy Committee', key: 'node-8' },
+    { id: 9, name: 'Health Committee', key: 'node-9' },
   ],
   links: [
-    { source: 0, target: 4, value: 250000 },
-    { source: 0, target: 6, value: 150000 },
-    { source: 1, target: 5, value: 180000 },
-    { source: 1, target: 7, value: 120000 },
-    { source: 2, target: 5, value: 300000 },
-    { source: 2, target: 7, value: 200000 },
-    { source: 3, target: 4, value: 400000 },
-    { source: 3, target: 6, value: 350000 },
-    { source: 4, target: 8, value: 100000 },
-    { source: 5, target: 9, value: 150000 },
-    { source: 6, target: 8, value: 80000 },
-    { source: 7, target: 9, value: 120000 },
+    { source: 0, target: 4, value: 250000, key: 'link-0-4' },
+    { source: 0, target: 6, value: 150000, key: 'link-0-6' },
+    { source: 1, target: 5, value: 180000, key: 'link-1-5' },
+    { source: 1, target: 7, value: 120000, key: 'link-1-7' },
+    { source: 2, target: 5, value: 300000, key: 'link-2-5' },
+    { source: 2, target: 7, value: 200000, key: 'link-2-7' },
+    { source: 3, target: 4, value: 400000, key: 'link-3-4' },
+    { source: 3, target: 6, value: 350000, key: 'link-3-6' },
+    { source: 4, target: 8, value: 100000, key: 'link-4-8' },
+    { source: 5, target: 9, value: 150000, key: 'link-5-9' },
+    { source: 6, target: 8, value: 80000, key: 'link-6-8' },
+    { source: 7, target: 9, value: 120000, key: 'link-7-9' },
   ],
 }
 
@@ -55,8 +55,9 @@ export default function MoneyFlow() {
     const color = isSource ? nodeColors[payload.name] || '#64748b' : '#475569'
 
     return (
-      <g>
+      <g key={`node-${index}`}>
         <Rectangle
+          key={`rect-${index}`}
           x={x}
           y={y}
           width={width}
@@ -65,6 +66,7 @@ export default function MoneyFlow() {
           fillOpacity={0.8}
         />
         <text
+          key={`text-${index}`}
           x={x + width / 2}
           y={y + height / 2}
           textAnchor="middle"

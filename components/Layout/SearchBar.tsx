@@ -96,9 +96,14 @@ export default function SearchBar() {
 
   const handleBillClick = (bill: Bill | CongressBill) => {
     if (isStateBill(bill)) {
-      router.push(`/bills/${bill.id}`)
+      // State bills navigate to their detail page - URL encode the ID to handle slashes
+      const encodedBillId = encodeURIComponent(bill.id)
+      router.push(`/bills/${encodedBillId}`)
     } else if (isFederalBill(bill)) {
-      router.push(`/bills/federal/${bill.congress}/${bill.type}/${bill.number}`)
+      // Federal bills navigate to their detail page with congress-type-number format
+      const billId = `${bill.congress}-${bill.type.toUpperCase()}-${bill.number}`
+      const encodedBillId = encodeURIComponent(billId)
+      router.push(`/bills/${encodedBillId}`)
     }
     setSearchQuery('')
     setSearchResults([])

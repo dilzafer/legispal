@@ -498,14 +498,15 @@ export default function BillDashboard({ billData, isOpen, onClose }: BillDashboa
                   <svg width="100%" height="140" className="text-xs text-gray-400">
                     <g className="bars" fill="#10b981">
                       {billData.lobbyingActivity.monthlyData.map((data, index) => {
-                        const height = parseInt(data.amount.replace(/[^\d]/g, '')) / 1000 // Convert to relative height
+                        const amount = parseInt(data.amount.replace(/[^\d]/g, '')) || 0
+                        const height = Math.min(amount / 1000, 120) // Convert to relative height, cap at 120
                         return (
-                          <rect 
+                          <rect
                             key={index}
-                            x={`${5 + index * 20}%`} 
-                            y={140 - height} 
-                            width="10%" 
-                            height={height}
+                            x={`${5 + index * 20}%`}
+                            y={Math.max(140 - height, 20)}
+                            width="10%"
+                            height={Math.max(height, 0)}
                           />
                         )
                       })}

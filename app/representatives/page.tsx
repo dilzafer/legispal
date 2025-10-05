@@ -525,16 +525,10 @@ function RepresentativesContent() {
         </main>
       </div>
 
-      {/* Bill Dashboard Overlay */}
-      <BillDashboardScan />
     </div>
   )
 }
 
 export default function RepresentativesPage() {
-  return (
-    <BillDashboardProvider>
-      <RepresentativesContent />
-    </BillDashboardProvider>
-  )
+  return <RepresentativesContent />
 }

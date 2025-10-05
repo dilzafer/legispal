@@ -1,10 +1,28 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { GoogleGenerativeAI } from '@google/generative-ai'
+import { dashboardCacheService } from '@/lib/firebase'
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '')
 
 export async function GET(request: NextRequest) {
   try {
+    // Try cache first
+    const cached = await dashboardCacheService.getCachedDashboardStats()
+    if (cached && cached.activeBills) {
+      console.log('✅ Using cached active bills data')
+      return NextResponse.json({
+        count: cached.activeBills.total,
+        federal: cached.activeBills.federal,
+        state: cached.activeBills.state,
+        change: cached.activeBills.trend === 'up' ? `+${cached.activeBills.percentChange}%` : 
+                cached.activeBills.trend === 'down' ? `-${cached.activeBills.percentChange}%` : '0%',
+        timeframe: 'vs last month',
+        lastUpdated: cached.cachedAt.toDate().toISOString(),
+        source: 'cached',
+        _fromCache: true,
+      })
+    }
+
     // First, try to get real data from Congress.gov API
     let realCount = 0
     let realSource = 'Congress.gov API'
@@ -69,6 +87,18 @@ export async function GET(request: NextRequest) {
 
           try {
             const trendData = JSON.parse(cleanText)
+            const percentChange = parseInt(trendData.change?.replace(/[^0-9-]/g, '') || '12')
+            const trend = percentChange > 0 ? 'up' : percentChange < 0 ? 'down' : 'stable'
+            
+            // Cache the result
+            await dashboardCacheService.cacheActiveBills(
+              realCount,
+              Math.round(realCount * 0.6), // Estimate federal
+              Math.round(realCount * 0.4), // Estimate state
+              trend as 'up' | 'down' | 'stable',
+              Math.abs(percentChange)
+            )
+            
             return NextResponse.json({
               count: realCount,
               change: trendData.change || '+12%',
@@ -82,6 +112,14 @@ export async function GET(request: NextRequest) {
             })
           } catch (parseError) {
             // Fallback to default trend
+            await dashboardCacheService.cacheActiveBills(
+              realCount,
+              Math.round(realCount * 0.6),
+              Math.round(realCount * 0.4),
+              'up',
+              12
+            )
+            
             return NextResponse.json({
               count: realCount,
               change: '+12%',
