@@ -177,8 +177,9 @@ export default function QuickStats() {
                 </p>
                 <p className="text-xs text-gray-400 mt-1">{stat.label}</p>
               </div>
-              
-              {hasSourceData && (
+
+              {/* Sources section removed for cleaner UI */}
+              {false && hasSourceData && (
                 <div className="border-t border-white/10 pt-2">
                   <button
                     onClick={() => toggleSourceExpansion(stat.label)}
