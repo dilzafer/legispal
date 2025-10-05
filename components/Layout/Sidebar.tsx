@@ -11,6 +11,7 @@ import {
   Search
 } from 'lucide-react'
 import Link from 'next/link'
+import Image from 'next/image'
 import OversightLogo from './OversightLogo'
 
 const sidebarItems = [
@@ -84,6 +85,25 @@ export default function Sidebar() {
         animate={{ opacity: 1 }}
         transition={{ delay: 0.8 }}
       >
+        {/* DC Background Image */}
+        <motion.div
+          className="relative mb-4 rounded-lg overflow-hidden"
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.9 }}
+        >
+          <Image
+            src="/DC_Background.png"
+            alt="Washington DC Capitol"
+            width={224}
+            height={140}
+            className="w-full h-auto object-cover rounded-lg opacity-80 hover:opacity-100 transition-opacity duration-300"
+            priority={false}
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-slate-900/60 to-transparent rounded-lg" />
+        </motion.div>
+
+        {/* Democracy Index Box */}
         <div className="bg-gradient-to-r from-gov-blue to-gov-red p-4 rounded-lg">
           <h3 className="text-white font-semibold text-sm mb-1">Democracy Index</h3>
           <div className="flex items-end gap-1">
