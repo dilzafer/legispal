@@ -72,7 +72,9 @@ function calculateTrendScore(bill: SponsoredBill): number {
  */
 async function transformBill(bill: SponsoredBill): Promise<RepresentativeBill> {
   try {
-    const billId = `${bill.type.toUpperCase()}-${bill.number}`
+    // Include congress number in bill ID to ensure correct bill is loaded
+    // Format: "118-HR-5615" (congress-type-number)
+    const billId = `${bill.congress}-${bill.type.toUpperCase()}-${bill.number}`
     const title = bill.title || 'Untitled Bill'
     const status = determineBillStatus(bill.latestAction)
     const date = bill.introducedDate || bill.latestAction?.actionDate || new Date().toISOString()
