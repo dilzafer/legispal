@@ -153,7 +153,14 @@ export default function MoneyFlow() {
             </button>
           </div>
         </div>
-      ) : financeData ? (
+      ) : financeData && 
+           financeData.nodes && 
+           Array.isArray(financeData.nodes) && 
+           financeData.nodes.length > 0 &&
+           financeData.links && 
+           Array.isArray(financeData.links) &&
+           financeData.links.length > 0 &&
+           financeData.totals ? (
         <>
           <div className="h-[400px]">
             <ResponsiveContainer width="100%" height="100%">
@@ -198,7 +205,32 @@ export default function MoneyFlow() {
             </div>
           </div>
         </>
-      ) : null}
+      ) : financeData && financeData.totals ? (
+        <div className="h-[400px] flex items-center justify-center">
+          <div className="text-center">
+            <p className="text-sm text-gray-400 mb-2">No flow data available</p>
+            <p className="text-xs text-gray-500 mb-4">Total tracked: {formatCurrency(financeData.totals.tracked)}</p>
+            <button
+              onClick={fetchFinanceData}
+              className="px-4 py-2 bg-green-500/20 text-green-400 rounded-lg hover:bg-green-500/30 transition-colors text-sm"
+            >
+              Refresh Data
+            </button>
+          </div>
+        </div>
+      ) : (
+        <div className="h-[400px] flex items-center justify-center">
+          <div className="text-center">
+            <p className="text-sm text-gray-400 mb-2">No campaign finance data available</p>
+            <button
+              onClick={fetchFinanceData}
+              className="px-4 py-2 bg-green-500/20 text-green-400 rounded-lg hover:bg-green-500/30 transition-colors text-sm"
+            >
+              Load Data
+            </button>
+          </div>
+        </div>
+      )}
     </motion.div>
   )
 }

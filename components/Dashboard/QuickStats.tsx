@@ -177,8 +177,67 @@ export default function QuickStats() {
                 </p>
                 <p className="text-xs text-gray-400 mt-1">{stat.label}</p>
               </div>
-
-              {/* Sources section removed for cleaner UI */}
+              
+              {hasSourceData && (
+                <div className="border-t border-white/10 pt-2">
+                  <button
+                    onClick={() => toggleSourceExpansion(stat.label)}
+                    className="flex items-center justify-between w-full text-xs text-gray-500 hover:text-gray-300 transition-colors"
+                  >
+                    <span>Sources ({stat.groundingMetadata?.sourceCount || 1})</span>
+                    {isExpanded ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
+                  </button>
+                  
+                  <AnimatePresence>
+                    {isExpanded && (
+                      <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: 'auto', opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        transition={{ duration: 0.2 }}
+                        className="overflow-hidden"
+                      >
+                        <div className="mt-2 max-h-48 overflow-y-auto space-y-3">
+                          <div className="text-xs text-gray-400">
+                            <p className="font-medium text-gray-300 mb-2">Data Source:</p>
+                            <p className="text-xs leading-relaxed bg-slate-800/30 p-2 rounded border border-white/5">{stat.source}</p>
+                          </div>
+                          
+                          {stat.groundingMetadata?.webSearchQueries && stat.groundingMetadata.webSearchQueries.length > 0 && (
+                            <div className="text-xs text-gray-400">
+                              <p className="font-medium text-gray-300 mb-2">Search Queries Used:</p>
+                              <div className="space-y-2 max-h-32 overflow-y-auto pr-1">
+                                {stat.groundingMetadata.webSearchQueries.slice(0, 8).map((query, idx) => (
+                                  <div key={idx} className="text-xs text-gray-500 bg-slate-800/50 p-2 rounded border border-white/5 hover:bg-slate-800/70 transition-colors">
+                                    <div className="flex items-start gap-2">
+                                      <span className="text-truth-green font-mono text-xs flex-shrink-0 mt-0.5">{idx + 1}.</span>
+                                      <span className="leading-relaxed">
+                                        {query.length > 80 ? `${query.substring(0, 80)}...` : query}
+                                      </span>
+                                    </div>
+                                  </div>
+                                ))}
+                                {stat.groundingMetadata.webSearchQueries.length > 8 && (
+                                  <div className="text-xs text-gray-500 italic text-center py-1">
+                                    +{stat.groundingMetadata.webSearchQueries.length - 8} more queries
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          )}
+                          
+                          {stat.groundingMetadata?.sourceCount && stat.groundingMetadata.sourceCount > 0 && (
+                            <div className="text-xs text-gray-400 pt-2 border-t border-white/10">
+                              <p className="font-medium text-gray-300 mb-1">Sources Consulted:</p>
+                              <p className="text-truth-green">{stat.groundingMetadata.sourceCount} web sources</p>
+                            </div>
+                          )}
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              )}
             </div>
           </motion.div>
         )

@@ -8,15 +8,14 @@ interface NewsArticle {
   title: string
   description: string
   url: string
-  urlToImage: string | null
-  publishedAt: string
-  source: {
-    name: string
-  }
+  image_url: string | null
+  published_at: string
+  source: string
+  snippet: string
 }
 
 interface InTheNewsProps {
-  apiKey: string
+  apiKey?: string // Made optional since we'll use our API endpoint
 }
 
 export default function InTheNews({ apiKey }: InTheNewsProps) {
@@ -26,49 +25,47 @@ export default function InTheNews({ apiKey }: InTheNewsProps) {
 
   useEffect(() => {
     const fetchNews = async () => {
-      if (!apiKey) {
-        setError('NewsAPI key is required')
-        setLoading(false)
-        return
-      }
-
       try {
-        // Search specifically for US Congress and federal legislation
-        const searchTerms = '"United States Congress" OR "US Congress" OR "congressional bill" OR "federal legislation" OR "senate bill" OR "house bill" OR "congressional hearing" OR "senate vote" OR "house vote" OR "Capitol Hill" OR "congressional committee" OR "legislative session" OR "bill passage" OR "congressional debate" OR "Washington DC" OR "federal government"'
-        const domains = 'politico.com,thehill.com,rollcall.com,congress.gov,senate.gov,house.gov'
+        setLoading(true)
+        setError(null)
 
-        const response = await fetch(
-          `https://newsapi.org/v2/everything?q=${encodeURIComponent(searchTerms)}&domains=${domains}&sortBy=publishedAt&pageSize=6&language=en&apiKey=${apiKey}`
-        )
+        // Use NewsData.io through our API endpoint
+        const response = await fetch('/api/news/newsdata?limit=6')
 
         if (!response.ok) {
-          // Handle News API limitations (426 = Upgrade Required for production)
-          if (response.status === 426) {
-            console.warn('News API requires paid plan for production deployment')
-            setError('News unavailable in production (News API limitation)')
-            setLoading(false)
-            return
-          }
           throw new Error(`HTTP error! status: ${response.status}`)
         }
 
         const data = await response.json()
 
-        if (data.status === 'ok') {
-          setArticles(data.articles || [])
+        if (data.articles && Array.isArray(data.articles)) {
+          setArticles(data.articles)
+        } else if (data.error) {
+          throw new Error(data.message || data.error)
         } else {
-          throw new Error(data.message || 'Failed to fetch news')
+          throw new Error('Invalid response format from NewsData.io service')
         }
       } catch (err) {
         console.error('Error fetching news:', err)
         setError(err instanceof Error ? err.message : 'Failed to fetch news')
+        
+        // Set fallback articles
+        setArticles([{
+          title: 'Congressional News Unavailable',
+          description: 'Unable to fetch current congressional news. Please try again later.',
+          url: '#',
+          image_url: null,
+          published_at: new Date().toISOString(),
+          source: 'System',
+          snippet: 'News service temporarily unavailable'
+        }])
       } finally {
         setLoading(false)
       }
     }
 
     fetchNews()
-  }, [apiKey])
+  }, [])
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString)
@@ -167,10 +164,10 @@ export default function InTheNews({ apiKey }: InTheNewsProps) {
               className="bg-white/5 rounded-lg p-4 hover:bg-white/10 transition-colors group"
             >
               <div className="flex space-x-4">
-                {article.urlToImage && (
+                {article.image_url && (
                   <div className="flex-shrink-0">
                     <img
-                      src={article.urlToImage}
+                      src={article.image_url}
                       alt={article.title}
                       className="w-16 h-16 rounded-lg object-cover"
                       onError={(e) => {
@@ -186,16 +183,16 @@ export default function InTheNews({ apiKey }: InTheNewsProps) {
                   </h3>
                   
                   <p className="text-gray-400 text-xs mb-3 line-clamp-2">
-                    {article.description}
+                    {article.description || article.snippet}
                   </p>
                   
                   <div className="flex items-center justify-between text-xs">
                     <div className="flex items-center space-x-4 text-gray-500">
                       <div className="flex items-center space-x-1">
                         <Calendar size={12} />
-                        <span>{formatDate(article.publishedAt)}</span>
+                        <span>{formatDate(article.published_at)}</span>
                       </div>
-                      <span>{article.source.name}</span>
+                      <span>{article.source}</span>
                     </div>
                     
                     <a
