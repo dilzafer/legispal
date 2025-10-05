@@ -160,11 +160,13 @@ export async function GET(request: NextRequest) {
     Make sure to focus on factual, recent events from the past week and provide balanced analysis based on current information.
     `
 
-    // Generate content (grounding removed - use the main gemini.ts API instead for grounding)
+    // Generate content with Google Search grounding for real-time information
     const result = await model.generateContent({
       contents: [{
-        role: 'user',
         parts: [{ text: prompt }]
+      }],
+      tools: [{
+        googleSearch: {}
       }],
       generationConfig: {
         temperature: 0.7,
