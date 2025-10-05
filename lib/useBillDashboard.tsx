@@ -3,7 +3,6 @@
 import { createContext, useContext, useState, ReactNode, useEffect } from 'react'
 import { BillData } from '@/components/Dashboard/BillDashboard'
 import { getCompleteBillData } from '@/lib/services/billService'
-import { mockBillData } from '@/lib/mockBillData'
 
 interface BillDashboardContextType {
   selectedBillId: string | null
@@ -30,13 +29,6 @@ export function BillDashboardProvider({ children }: { children: ReactNode }) {
       setLoading(true)
 
       try {
-        // First check mock data for fast loading
-        if (mockBillData[selectedBillId]) {
-          setSelectedBillData(mockBillData[selectedBillId])
-          setLoading(false)
-          return
-        }
-
         // Parse bill ID (e.g., "HR-2024" or "S-3041")
         const billIdMatch = selectedBillId.match(/^([A-Z]+)-(\d+)$/)
         if (!billIdMatch) {

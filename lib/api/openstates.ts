@@ -74,8 +74,12 @@ const OPENSTATES_API_BASE = 'https://v3.openstates.org'
  * Get OpenStates API key from environment
  */
 function getApiKey(): string {
-  // In production, this should be set in environment variables
-  return process.env.NEXT_PUBLIC_OPENSTATES_API_KEY || ''
+  const apiKey = process.env.NEXT_PUBLIC_OPENSTATES_API_KEY || ''
+  // Return empty string if placeholder value
+  if (apiKey.includes('your_') || apiKey.includes('_here')) {
+    return ''
+  }
+  return apiKey
 }
 
 /**

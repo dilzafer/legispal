@@ -48,11 +48,10 @@ export async function getTrendingBills(limit: number = 10): Promise<Partial<Bill
     // Fetch real bills from Congress API
     const congressBills = await fetchRecentBills(limit * 2, 0)
 
-    // Fallback to mock data if API fails
+    // Return empty array if API fails
     if (congressBills.length === 0) {
-      console.warn('⚠️  No bills from Congress API, using mock data')
-      const { mockBillData } = await import('@/lib/mockBillData')
-      return Object.values(mockBillData).slice(0, limit)
+      console.warn('⚠️  No bills from Congress API')
+      return []
     }
 
     // Calculate trend scores and sort
@@ -76,8 +75,7 @@ export async function getTrendingBills(limit: number = 10): Promise<Partial<Bill
     return bills
   } catch (error) {
     console.error('❌ Error fetching trending bills:', error)
-    const { mockBillData } = await import('@/lib/mockBillData')
-    return Object.values(mockBillData).slice(0, limit)
+    return []
   }
 }
 
@@ -92,11 +90,10 @@ export async function getPolarizingBills(limit: number = 5): Promise<Partial<Bil
     // Fetch more bills to analyze (we'll filter for polarizing ones)
     const congressBills = await fetchRecentBills(limit * 6, 0)
 
-    // Fallback to mock data if API fails
+    // Return empty array if API fails
     if (congressBills.length === 0) {
-      console.warn('⚠️  No bills from Congress API, using mock data')
-      const { mockBillData } = await import('@/lib/mockBillData')
-      return Object.values(mockBillData).slice(0, limit)
+      console.warn('⚠️  No bills from Congress API')
+      return []
     }
 
     const polarizingBills: Array<{
@@ -144,13 +141,18 @@ export async function getPolarizingBills(limit: number = 5): Promise<Partial<Bil
         const billData = await convertCongressBillToBillDataQuick(bill, calculateTrendScore(bill))
 
         if (billData) {
+          // Calculate engagement metrics from bill data
+          const cosponsorCount = bill.cosponsors?.length || 0
+          const trendScore = calculateTrendScore(bill)
+          const baseEngagement = (cosponsorCount * 100) + (trendScore * 50)
+
           // Update with polarization data
           billData.publicSentiment = {
             democratSupport: Math.round(finalDemSupport),
             republicanSupport: Math.round(finalRepSupport),
-            comments: Math.floor(Math.random() * 5000) + 1000,
-            support: Math.floor(Math.random() * 3000) + 500,
-            oppose: Math.floor(Math.random() * 2000) + 300,
+            comments: Math.round(baseEngagement * 1.5),
+            support: Math.round(baseEngagement * (finalDemSupport / 100)),
+            oppose: Math.round(baseEngagement * (finalRepSupport / 100)),
             argumentsFor: polarizationAnalysis?.reasoning || 'Supporters argue this addresses a critical policy need',
             argumentsAgainst: polarizationAnalysis?.reasoning || 'Critics warn of unintended consequences'
           }
@@ -186,8 +188,7 @@ export async function getPolarizingBills(limit: number = 5): Promise<Partial<Bil
     return polarizingBills.slice(0, limit).map(item => item.data)
   } catch (error) {
     console.error('❌ Error fetching polarizing bills:', error)
-    const { mockBillData } = await import('@/lib/mockBillData')
-    return Object.values(mockBillData).slice(0, limit)
+    return []
   }
 }
 
@@ -441,9 +442,9 @@ async function buildCompleteBillData(
     publicSentiment: {
       democratSupport,
       republicanSupport,
-      comments: Math.floor(Math.random() * 20000) + 5000,
-      support: Math.floor(Math.random() * 10000) + 2000,
-      oppose: Math.floor(Math.random() * 8000) + 1000,
+      comments: Math.round((cosponsors.length * 200) + (calculateTrendScore(bill) * 100)),
+      support: Math.round(((cosponsors.length * 200) + (calculateTrendScore(bill) * 100)) * (democratSupport / 100)),
+      oppose: Math.round(((cosponsors.length * 200) + (calculateTrendScore(bill) * 100)) * (republicanSupport / 100)),
       argumentsFor: analysis?.publicSentiment?.argumentsFor || 'No data available',
       argumentsAgainst: analysis?.publicSentiment?.argumentsAgainst || 'No data available'
     },
@@ -453,8 +454,12 @@ async function buildCompleteBillData(
       coSponsorList: cosponsors.slice(0, 3).map(c => `${c.fullName} (${c.party}-${c.state})`).join(', ')
     },
     lobbyingActivity: {
-      monthlyData: [],
-      topEntities: []
+      monthlyData: moneyFlow.monthlyActivity || [],
+      topEntities: moneyFlow.topCommittees.slice(0, 3).map(c => ({
+        name: c.name,
+        amount: c.amount,
+        filings: Math.floor(Math.random() * 10) + 1 // Placeholder - would need filings endpoint
+      }))
     },
     impact: {
       fiscalNote: analysis?.impactAnalysis?.fiscalNote || 'No fiscal analysis available',

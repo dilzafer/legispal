@@ -74,6 +74,10 @@ export interface MoneyFlowData {
     amount: string
     type: string
   }>
+  monthlyActivity?: Array<{
+    month: string
+    amount: string
+  }>
 }
 
 /**
@@ -200,6 +204,63 @@ function mapBillToIndustrySectors(billTitle: string, billCategories: string[]): 
 }
 
 /**
+ * Get lobbying expenditures over time for monthly activity chart
+ */
+export async function getMonthlyLobbyingActivity(
+  sectors: string[],
+  monthsBack: number = 6
+): Promise<Array<{ month: string; amount: string }>> {
+  try {
+    const endDate = new Date()
+    const startDate = new Date()
+    startDate.setMonth(startDate.getMonth() - monthsBack)
+
+    const monthlyData: Record<string, number> = {}
+
+    // Initialize months
+    for (let i = 0; i < monthsBack; i++) {
+      const date = new Date()
+      date.setMonth(date.getMonth() - i)
+      const monthKey = date.toLocaleDateString('en-US', { month: 'short' })
+      monthlyData[monthKey] = 0
+    }
+
+    // Fetch expenditures for relevant sectors
+    for (const sector of sectors) {
+      const url = `${FEC_BASE_URL}/schedules/schedule_e/?api_key=${FEC_API_KEY}&per_page=50&sort=-expenditure_date`
+      const response = await fetch(url, { next: { revalidate: 3600 } })
+
+      if (response.ok) {
+        const data = await response.json()
+        const expenditures = data.results || []
+
+        expenditures.forEach((exp: FECIndependentExpenditure) => {
+          if (exp.expenditure_date && exp.expenditure_amount) {
+            const expDate = new Date(exp.expenditure_date)
+            const monthKey = expDate.toLocaleDateString('en-US', { month: 'short' })
+            if (monthKey in monthlyData) {
+              monthlyData[monthKey] += exp.expenditure_amount
+            }
+          }
+        })
+      }
+    }
+
+    // Convert to array format
+    const monthNames = Object.keys(monthlyData).reverse()
+    return monthNames.map(month => ({
+      month,
+      amount: monthlyData[month] > 0 ? `$${Math.round(monthlyData[month] / 1000)}k` : '$0'
+    }))
+  } catch (error) {
+    console.error('Error fetching monthly lobbying activity:', error)
+    // Return placeholder data
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun']
+    return months.map(month => ({ month, amount: '$0' }))
+  }
+}
+
+/**
  * Build money flow data for a bill based on topic analysis
  */
 export async function getMoneyFlowForBill(
@@ -302,6 +363,9 @@ export async function getMoneyFlowForBill(
       .map(c => c.contributor_name || c.contributor_employer || 'Unknown')
       .join(', ')
 
+    // Get monthly lobbying activity
+    const monthlyActivity = await getMonthlyLobbyingActivity(sectors, 6)
+
     return {
       total: totalAmount > 0
         ? `$${(totalAmount / 1000000).toFixed(1)}M total related spending`
@@ -310,7 +374,8 @@ export async function getMoneyFlowForBill(
       topDonors: topDonorNames || 'Not applicable, Not applicable, Not applicable',
       sources,
       flows,
-      topCommittees
+      topCommittees,
+      monthlyActivity
     }
   } catch (error) {
     console.error('Error building money flow data:', error)
@@ -320,7 +385,8 @@ export async function getMoneyFlowForBill(
       topDonors: 'Not applicable, Not applicable, Not applicable',
       sources: [],
       flows: [],
-      topCommittees: []
+      topCommittees: [],
+      monthlyActivity: []
     }
   }
 }

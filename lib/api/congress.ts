@@ -106,8 +106,8 @@ export async function fetchRecentBills(
   try {
     const apiKey = process.env.NEXT_PUBLIC_CONGRESS_API_KEY
 
-    if (!apiKey) {
-      console.warn('⚠️  Congress API key not configured. Set NEXT_PUBLIC_CONGRESS_API_KEY in .env.local')
+    if (!apiKey || apiKey.includes('your_') || apiKey.includes('_here')) {
+      console.warn('⚠️  Congress API key not configured. Get your API key from https://api.congress.gov/sign-up/ and set NEXT_PUBLIC_CONGRESS_API_KEY in .env.local')
       return []
     }
 
@@ -150,7 +150,7 @@ export async function fetchBillDetails(
   try {
     const apiKey = process.env.NEXT_PUBLIC_CONGRESS_API_KEY
 
-    if (!apiKey) {
+    if (!apiKey || apiKey.includes('your_') || apiKey.includes('_here')) {
       console.warn('⚠️  Congress API key not configured')
       return null
     }
@@ -188,7 +188,7 @@ export async function fetchBillActions(
 ): Promise<any[]> {
   try {
     const apiKey = process.env.NEXT_PUBLIC_CONGRESS_API_KEY
-    if (!apiKey) return []
+    if (!apiKey || apiKey.includes('your_') || apiKey.includes('_here')) return []
 
     const url = `${CONGRESS_API_BASE}/bill/${congress}/${billType}/${billNumber}/actions?api_key=${apiKey}&format=json`
 
@@ -219,7 +219,7 @@ export async function fetchBillCosponsors(
 ): Promise<any[]> {
   try {
     const apiKey = process.env.NEXT_PUBLIC_CONGRESS_API_KEY
-    if (!apiKey) return []
+    if (!apiKey || apiKey.includes('your_') || apiKey.includes('_here')) return []
 
     const url = `${CONGRESS_API_BASE}/bill/${congress}/${billType}/${billNumber}/cosponsors?api_key=${apiKey}&format=json`
 
@@ -289,7 +289,7 @@ async function fetchVoteDetails(
 ): Promise<CongressVote | null> {
   try {
     const apiKey = process.env.NEXT_PUBLIC_CONGRESS_API_KEY
-    if (!apiKey) return null
+    if (!apiKey || apiKey.includes('your_') || apiKey.includes('_here')) return null
 
     const url = `${CONGRESS_API_BASE}/vote/${congress}/${chamber}/${rollNumber}?api_key=${apiKey}&format=json`
 

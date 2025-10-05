@@ -429,7 +429,10 @@ Return ONLY valid JSON, no markdown formatting.`
       generationConfig: {
         temperature: 0.3, // Low temperature for consistent results
         maxOutputTokens: 512, // Short response for speed
-      }
+      },
+      tools: [{
+        google_search: {} // Enable Google Search grounding for accurate polarization data
+      }]
     }
 
     const url = `${GEMINI_API_BASE}/models/${model}:generateContent?key=${apiKey}`
