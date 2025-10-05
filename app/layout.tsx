@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import { IBM_Plex_Serif } from 'next/font/google'
 import './globals.css'
 import Sidebar from '@/components/Layout/Sidebar'
-import SearchBar from '@/components/Layout/SearchBar'
+import ConditionalHeader from '@/components/Layout/ConditionalHeader'
 import { BillDashboardProvider } from '@/lib/useBillDashboard'
 import BillDashboardScan from '@/components/Dashboard/BillDashboardScan'
 
@@ -29,11 +29,7 @@ export default function RootLayout({
           <Sidebar />
 
           <div className="ml-64 min-h-screen">
-            <header className="sticky top-0 z-40 bg-slate-950/80 backdrop-blur-xl border-b border-white/10">
-              <div className="px-8 py-6">
-                <SearchBar />
-              </div>
-            </header>
+            <ConditionalHeader />
 
             <main className="px-8 py-6">
               {children}

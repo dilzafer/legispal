@@ -1,19 +1,20 @@
 // Bill caching service using Firebase Firestore
-import {
-  collection,
-  doc,
-  getDoc,
-  setDoc,
-  deleteDoc,
-  getDocs,
-  query,
-  where,
-  orderBy,
-  limit,
-  Timestamp,
-  serverTimestamp,
-} from 'firebase/firestore';
-import { db } from './config';
+// Temporarily disabled Firebase imports to fix build error
+// import {
+//   collection,
+//   doc,
+//   getDoc,
+//   setDoc,
+//   deleteDoc,
+//   getDocs,
+//   query,
+//   where,
+//   orderBy,
+//   limit,
+//   Timestamp,
+//   serverTimestamp,
+// } from 'firebase/firestore';
+// import { db } from './config';
 
 /**
  * Cached Bill Structure

@@ -7,13 +7,15 @@ import {
   TrendingUp,
   Users,
   MessageCircle,
-  Shield
+  Shield,
+  Search
 } from 'lucide-react'
 import Link from 'next/link'
 import OversightLogo from './OversightLogo'
 
 const sidebarItems = [
   { name: 'Dashboard', icon: Home, href: '/' },
+  { name: 'Search', icon: Search, href: '/search' },
   { name: 'Trending Bills', icon: TrendingUp, href: '/trending' },
   { name: 'My Representatives', icon: Users, href: '/representatives' },
   { name: 'Lobbying Activity', icon: MessageCircle, href: '/lobbying' },
