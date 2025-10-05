@@ -106,20 +106,93 @@ class CongressService {
   }
 
   /**
-   * Search bills by text (using fromDateTime filter as proxy)
+   * Search bills by text - fetches from multiple bill types and filters
    */
   async searchBillsByText(
     query: string,
     options?: Partial<CongressBillSearchParams>
   ): Promise<CongressBillList> {
-    // Note: Congress.gov API doesn't have full-text search like OpenStates
-    // We'll return recent bills and let the frontend filter
-    // For production, you'd want to implement a proper search backend
-    return this.searchBills({
-      congress: CONGRESS_CONFIG.CURRENT_CONGRESS,
-      limit: options?.limit || 20,
-      ...options,
-    });
+    // Congress.gov API doesn't have full-text search
+    // We fetch from multiple bill types and filter client-side
+    const limit = options?.limit || 20;
+    const congress = options?.congress || CONGRESS_CONFIG.CURRENT_CONGRESS;
+    
+    try {
+      // Fetch from both House and Senate bills for better coverage
+      const [houseResponse, senateResponse] = await Promise.all([
+        this.searchBills({
+          congress,
+          billType: 'hr',
+          limit: 100,
+          sort: 'updateDate+desc',
+        }),
+        this.searchBills({
+          congress,
+          billType: 's',
+          limit: 100,
+          sort: 'updateDate+desc',
+        }),
+      ]);
+
+      // Combine bills from both chambers
+      const allBills = [...houseResponse.bills, ...senateResponse.bills];
+
+      // Filter bills by query in title, number, or type
+      if (query && query.length > 0) {
+        const lowerQuery = query.toLowerCase();
+        const filtered = allBills.filter(bill => {
+          const titleMatch = bill.title?.toLowerCase().includes(lowerQuery);
+          const numberMatch = bill.number?.toLowerCase().includes(lowerQuery);
+          const typeMatch = bill.type?.toLowerCase().includes(lowerQuery);
+          
+          // Also check if query matches bill ID format (e.g., "HR 1234" or "S 567")
+          const billId = `${bill.type} ${bill.number}`.toLowerCase();
+          const idMatch = billId.includes(lowerQuery);
+          
+          return titleMatch || numberMatch || typeMatch || idMatch;
+        });
+
+        // Sort by update date (most recent first)
+        filtered.sort((a, b) => {
+          const dateA = new Date(a.updateDate || 0).getTime();
+          const dateB = new Date(b.updateDate || 0).getTime();
+          return dateB - dateA;
+        });
+
+        return {
+          bills: filtered.slice(0, limit),
+          pagination: {
+            count: filtered.length,
+            next: filtered.length > limit ? 'more available' : undefined,
+          },
+        };
+      }
+
+      // No query - return recent bills from both chambers
+      const combined = allBills
+        .sort((a, b) => {
+          const dateA = new Date(a.updateDate || 0).getTime();
+          const dateB = new Date(b.updateDate || 0).getTime();
+          return dateB - dateA;
+        })
+        .slice(0, limit);
+
+      return {
+        bills: combined,
+        pagination: {
+          count: combined.length,
+          next: allBills.length > limit ? 'more available' : undefined,
+        },
+      };
+    } catch (error) {
+      console.error('Error searching bills by text:', error);
+      // Fallback to single request
+      return this.searchBills({
+        congress,
+        limit,
+        sort: 'updateDate+desc',
+      });
+    }
   }
 
   /**
