@@ -13,6 +13,25 @@ function getGeminiApiKey(): string {
   return process.env.NEXT_PUBLIC_GEMINI_API_KEY || process.env.GEMINI_API_KEY || ''
 }
 
+function formatPeriod(period: string): string {
+  switch (period) {
+    case 'first_quarter':
+      return 'First quarter'
+    case 'second_quarter':
+      return 'Second quarter'
+    case 'third_quarter':
+      return 'Third quarter'
+    case 'fourth_quarter':
+      return 'Fourth quarter'
+    case 'mid_year':
+      return 'Mid year'
+    case 'year_end':
+      return 'Year end'
+    default:
+      return period
+  }
+}
+
 async function estimateAggregateStats(
   sampleStats: any,
   totalFilings: number,
@@ -150,7 +169,7 @@ export async function GET(request: NextRequest) {
       activeActivities: estimatedStats.activeActivities,
       uniqueBills: estimatedStats.uniqueBills,
       averagePerActivity: estimatedStats.averagePerActivity,
-      period: filing_period || `Year ${filing_year || new Date().getFullYear()}`,
+      period: filing_period ? formatPeriod(filing_period) : `Year ${filing_year || new Date().getFullYear()}`,
       totalFilings: response.count,
       sampleSize: response.results.length,
       estimatedByAI: true
