@@ -18,7 +18,13 @@ export async function POST(request: NextRequest) {
 
     console.log(`🔍 Natural Language Search: Processing query "${query}"`)
 
-    let searchResults = {
+    let searchResults: {
+      bills: any[]
+      analysis: string
+      source: string
+      groundingMetadata: any
+      searchTime: number
+    } = {
       bills: [],
       analysis: `Search results for "${query}"`,
       source: 'Vector Search + AI Analysis',

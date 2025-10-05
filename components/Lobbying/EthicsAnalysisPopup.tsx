@@ -60,6 +60,7 @@ export default function EthicsAnalysisPopup({ isOpen, onClose, lobbyistProfile }
       setLoading(false)
       fetchAnalysis()
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, lobbyistProfile?.name, lobbyistProfile?.firm, lobbyistProfile?.client])
 
   const getScoreColor = (score: number) => {
