@@ -51,14 +51,29 @@ export interface GeminiAnalysisCache {
   expiresAt: Timestamp;
 }
 
+/**
+ * Trending Bills Cache
+ */
+export interface TrendingBillsCache {
+  id: string;
+  bills: any[];
+  totalCount: number;
+  analysis?: string;
+  source: string;
+  cachedAt: Timestamp;
+  expiresAt: Timestamp;
+}
+
 const COLLECTIONS = {
   DASHBOARD_STATS: 'dashboardStats',
   GEMINI_CACHE: 'geminiCache',
+  TRENDING_BILLS: 'trendingBills',
 } as const;
 
 // Cache durations
 const DASHBOARD_CACHE_DURATION = 6 * 60 * 60 * 1000; // 6 hours
 const GEMINI_CACHE_DURATION = 12 * 60 * 60 * 1000; // 12 hours
+const TRENDING_BILLS_CACHE_DURATION = 1 * 60 * 60 * 1000; // 1 hour
 
 /**
  * Dashboard Cache Service
@@ -250,6 +265,63 @@ export class DashboardCacheService {
       });
     } catch (error) {
       console.error('Error caching citizen engagement:', error);
+    }
+  }
+
+  /**
+   * Cache trending bills
+   */
+  async cacheTrendingBills(bills: any[], totalCount: number, analysis?: string, source?: string): Promise<void> {
+    try {
+      const now = Timestamp.now();
+      const expiresAt = Timestamp.fromMillis(now.toMillis() + TRENDING_BILLS_CACHE_DURATION);
+
+      const cacheData: Omit<TrendingBillsCache, 'id'> = {
+        bills,
+        totalCount,
+        analysis,
+        source: source || 'unknown',
+        cachedAt: now,
+        expiresAt,
+      };
+
+      const docRef = doc(db, COLLECTIONS.TRENDING_BILLS, 'current');
+      await setDoc(docRef, cacheData);
+
+      console.log(`✅ Cached ${bills.length} trending bills`);
+    } catch (error) {
+      console.error('Error caching trending bills:', error);
+      // Don't throw - caching is optional
+    }
+  }
+
+  /**
+   * Get cached trending bills
+   */
+  async getCachedTrendingBills(): Promise<TrendingBillsCache | null> {
+    try {
+      const docRef = doc(db, COLLECTIONS.TRENDING_BILLS, 'current');
+      const docSnap = await getDoc(docRef);
+
+      if (!docSnap.exists()) {
+        console.log('📊 No cached trending bills found');
+        return null;
+      }
+
+      const cache = { id: docSnap.id, ...docSnap.data() } as TrendingBillsCache;
+
+      // Check if cache is expired
+      const now = Timestamp.now();
+      if (cache.expiresAt.toMillis() < now.toMillis()) {
+        console.log('⏰ Trending bills cache expired');
+        return null;
+      }
+
+      console.log(`✅ Retrieved ${cache.bills.length} cached trending bills`);
+      return cache;
+    } catch (error) {
+      console.error('Error getting cached trending bills:', error);
+      return null;
     }
   }
 }

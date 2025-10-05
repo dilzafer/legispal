@@ -5,6 +5,7 @@ import Sidebar from '@/components/Layout/Sidebar'
 import ConditionalHeader from '@/components/Layout/ConditionalHeader'
 import { BillDashboardProvider } from '@/lib/useBillDashboard'
 import BillDashboardScan from '@/components/Dashboard/BillDashboardScan'
+import FloatingTTSButton from '@/components/TextToSpeech/FloatingTTSButton'
 
 const ibmPlexSerif = IBM_Plex_Serif({
   weight: ['300', '400', '500', '600', '700'],
@@ -38,6 +39,9 @@ export default function RootLayout({
 
           {/* Global Bill Dashboard Overlay */}
           <BillDashboardScan />
+          
+          {/* Text-to-Speech Floating Button */}
+          <FloatingTTSButton />
         </BillDashboardProvider>
       </body>
     </html>

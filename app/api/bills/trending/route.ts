@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { GoogleGenerativeAI } from '@google/generative-ai'
+import { dashboardCacheService } from '@/lib/firebase/dashboardCache'
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '')
 
@@ -10,6 +11,20 @@ export async function GET(request: NextRequest) {
     const includeAnalysis = searchParams.get('analysis') === 'true'
 
     console.log(`🔍 API: Fetching ${limit} trending bills${includeAnalysis ? ' with AI analysis' : ''}...`)
+
+    // Try cache first
+    const cached = await dashboardCacheService.getCachedTrendingBills()
+    if (cached && cached.bills && cached.bills.length > 0) {
+      console.log(`✅ Using ${cached.bills.length} cached trending bills`)
+      return NextResponse.json({
+        bills: cached.bills.slice(0, limit),
+        totalCount: cached.totalCount,
+        analysis: cached.analysis,
+        lastUpdated: cached.cachedAt.toDate().toISOString(),
+        source: cached.source,
+        _fromCache: true,
+      })
+    }
 
     // First, try to get real data from Congress.gov API
     let congressBills: any[] = []
@@ -119,6 +134,14 @@ Return ONLY the JSON object, no other text.`
               }
             })
 
+            // Cache the enhanced bills
+            await dashboardCacheService.cacheTrendingBills(
+              enhancedBills,
+              congressBills.length,
+              trendAnalysis.analysis,
+              realSource
+            )
+
             return NextResponse.json({
               bills: enhancedBills,
               totalCount: congressBills.length,
@@ -151,6 +174,14 @@ Return ONLY the JSON object, no other text.`
         },
         mediaAttention: 'medium'
       }))
+
+      // Cache the bills
+      await dashboardCacheService.cacheTrendingBills(
+        billsWithTrendScores,
+        congressBills.length,
+        'Recent congressional activity shows continued focus on key legislative priorities',
+        realSource
+      )
 
       return NextResponse.json({
         bills: billsWithTrendScores,
@@ -242,6 +273,16 @@ Return ONLY the JSON object, no other text.`
 
     try {
       const parsedResponse = JSON.parse(cleanText)
+      
+      // Cache the Gemini-generated bills
+      if (parsedResponse.bills && parsedResponse.bills.length > 0) {
+        await dashboardCacheService.cacheTrendingBills(
+          parsedResponse.bills,
+          parsedResponse.totalCount || parsedResponse.bills.length,
+          parsedResponse.analysis,
+          parsedResponse.source || 'AI-generated'
+        )
+      }
       
       return NextResponse.json({
         ...parsedResponse,

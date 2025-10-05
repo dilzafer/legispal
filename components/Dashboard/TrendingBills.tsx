@@ -39,18 +39,23 @@ export default function TrendingBills() {
         
         const data = await response.json()
         console.log('Dashboard trending bills data:', data)
+        console.log('Number of bills received:', data.bills?.length || 0)
         
         // Transform to expected format
-        const transformedBills: Bill[] = data.bills
-          .filter((bill: any) => bill.id && bill.title)
+        const transformedBills: Bill[] = (data.bills || [])
+          .filter((bill: any) => (bill.id || (bill.type && bill.number)) && (bill.title || bill.latestAction?.text))
           .map((bill: any) => {
+            // Generate ID from type and number if not present
+            const billId = bill.id || `${bill.type}.${bill.number}`
+            const billTitle = bill.title || bill.latestAction?.text || 'Untitled Bill'
+            
             return {
-              id: bill.id || `${bill.type || 'HR'}-${bill.number || '0000'}`,
-              title: bill.title || 'Untitled Bill',
+              id: billId,
+              title: billTitle,
               sponsor: bill.sponsor || bill.sponsors?.[0]?.fullName || 'Unknown',
-              date: bill.date || bill.introducedDate || new Date().toISOString().split('T')[0],
+              date: bill.date || bill.introducedDate || bill.updateDate || new Date().toISOString().split('T')[0],
               trendScore: bill.trendScore || Math.floor(Math.random() * 40) + 60,
-              summary: bill.summary || bill.description || bill.title || 'No summary available',
+              summary: bill.summary || bill.description || bill.latestAction?.text || billTitle,
               tags: bill.tags || bill.subjects?.legislativeSubjects?.slice(0, 3).map((s: any) => s.name) || ['Legislation'],
               supportersCount: bill.supportersCount || Math.round((bill.trendScore || 70) * 100),
               opposersCount: bill.opposersCount || Math.round((bill.trendScore || 70) * 60),
@@ -60,6 +65,9 @@ export default function TrendingBills() {
             }
           })
 
+        console.log('Transformed bills count:', transformedBills.length)
+        console.log('First transformed bill:', transformedBills[0])
+        
         setBills(transformedBills)
         setError(null)
       } catch (err) {
