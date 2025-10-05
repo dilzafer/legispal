@@ -55,8 +55,10 @@ function RepresentativesContent() {
   const [expandedRep, setExpandedRep] = useState<string | null>(null)
   const [representatives, setRepresentatives] = useState<Representative[]>([])
   const [representativeBills, setRepresentativeBills] = useState<Record<string, RepresentativeBill[]>>({})
+  const [representativeDetails, setRepresentativeDetails] = useState<Record<string, any>>({})
   const [loading, setLoading] = useState(true)
   const [loadingBills, setLoadingBills] = useState<Record<string, boolean>>({})
+  const [loadingDetails, setLoadingDetails] = useState<Record<string, boolean>>({})
   const [error, setError] = useState<string | null>(null)
   const { openBillDashboard } = useBillDashboard()
 
@@ -87,6 +89,53 @@ function RepresentativesContent() {
 
     fetchRepresentatives()
   }, [])
+
+  // Fetch detailed info for a representative
+  async function fetchRepresentativeDetails(bioguideId: string) {
+    if (representativeDetails[bioguideId]) {
+      // Already loaded
+      return
+    }
+
+    try {
+      setLoadingDetails(prev => ({ ...prev, [bioguideId]: true }))
+      console.log(`🔄 Fetching details for ${bioguideId}...`)
+
+      const response = await fetch(`/api/representatives/${bioguideId}`)
+      if (!response.ok) {
+        throw new Error('Failed to fetch details')
+      }
+
+      const data = await response.json()
+      console.log(`✅ Loaded details for ${bioguideId}`)
+
+      setRepresentativeDetails(prev => ({
+        ...prev,
+        [bioguideId]: data
+      }))
+
+      // Update the representative in the list with the new details
+      setRepresentatives(prev => prev.map(rep => {
+        if (rep.bioguideId === bioguideId) {
+          return {
+            ...rep,
+            bio: data.bio || rep.bio,
+            yearsInOffice: data.yearsInOffice || rep.yearsInOffice,
+            committeeMemberships: data.committeeMemberships || rep.committeeMemberships,
+            contactInfo: {
+              ...rep.contactInfo,
+              ...data.contactInfo
+            }
+          }
+        }
+        return rep
+      }))
+    } catch (err) {
+      console.error(`❌ Error fetching details for ${bioguideId}:`, err)
+    } finally {
+      setLoadingDetails(prev => ({ ...prev, [bioguideId]: false }))
+    }
+  }
 
   // Fetch bills when a representative is expanded
   async function fetchBillsForRepresentative(bioguideId: string) {
@@ -154,8 +203,9 @@ function RepresentativesContent() {
     const isExpanding = expandedRep !== repId
     setExpandedRep(isExpanding ? repId : null)
 
-    // Fetch bills when expanding
+    // Fetch details and bills when expanding
     if (isExpanding) {
+      fetchRepresentativeDetails(bioguideId)
       fetchBillsForRepresentative(bioguideId)
     }
   }
@@ -306,11 +356,10 @@ function RepresentativesContent() {
                       </div>
                     </div>
                     <p className="text-gray-300 mb-3">{rep.bio}</p>
-                    
+
                     <div className="flex flex-wrap gap-4 text-sm text-gray-400">
-                      <div>Years in Office: <span className="text-white">{rep.yearsInOffice}</span></div>
-                      <div>Total Votes: <span className="text-white">{rep.votingRecord.totalVotes.toLocaleString()}</span></div>
-                      <div>Party Unity: <span className="text-white">{rep.votingRecord.partyUnity}%</span></div>
+                      <div>Years in Office: <span className="text-white">{rep.yearsInOffice > 0 ? rep.yearsInOffice : 'Current'}</span></div>
+                      {rep.district && <div>District: <span className="text-white">{rep.district}</span></div>}
                     </div>
                   </div>
 
@@ -350,28 +399,31 @@ function RepresentativesContent() {
                       <div>
                         <h4 className="text-lg font-semibold text-white mb-3">Contact Information</h4>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <div className="flex items-center gap-2 text-gray-300">
-                            <Mail size={16} />
-                            <a href={`mailto:${rep.contactInfo.email}`} className="hover:text-white transition-colors">
-                              {rep.contactInfo.email}
-                            </a>
-                          </div>
-                          <div className="flex items-center gap-2 text-gray-300">
-                            <Phone size={16} />
-                            <a href={`tel:${rep.contactInfo.phone}`} className="hover:text-white transition-colors">
-                              {rep.contactInfo.phone}
-                            </a>
-                          </div>
-                          <div className="flex items-center gap-2 text-gray-300">
-                            <MapPin size={16} />
-                            <span>{rep.contactInfo.office}</span>
-                          </div>
-                          <div className="flex items-center gap-2 text-gray-300">
-                            <Globe size={16} />
-                            <a href={rep.contactInfo.website} target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">
-                              Official Website
-                            </a>
-                          </div>
+                          {rep.contactInfo.phone && (
+                            <div className="flex items-center gap-2 text-gray-300">
+                              <Phone size={16} />
+                              <a href={`tel:${rep.contactInfo.phone}`} className="hover:text-white transition-colors">
+                                {rep.contactInfo.phone}
+                              </a>
+                            </div>
+                          )}
+                          {rep.contactInfo.office && (
+                            <div className="flex items-center gap-2 text-gray-300">
+                              <MapPin size={16} />
+                              <span>{rep.contactInfo.office}</span>
+                            </div>
+                          )}
+                          {rep.contactInfo.website && (
+                            <div className="flex items-center gap-2 text-gray-300">
+                              <Globe size={16} />
+                              <a href={rep.contactInfo.website} target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">
+                                Official Website
+                              </a>
+                            </div>
+                          )}
+                          {!rep.contactInfo.phone && !rep.contactInfo.office && !rep.contactInfo.website && (
+                            <p className="text-gray-400 col-span-2">Contact information available through official congressional directories</p>
+                          )}
                         </div>
                       </div>
 

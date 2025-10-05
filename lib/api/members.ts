@@ -248,20 +248,26 @@ export function calculateYearsInOffice(member: CongressMember | MemberDetails): 
 }
 
 /**
- * Determine current chamber from member terms
+ * Determine current chamber from member data
  */
 export function getCurrentChamber(member: CongressMember | MemberDetails): 'House' | 'Senate' | null {
-  if (!member.terms || !member.terms.item || member.terms.item.length === 0) {
-    return null
+  // First check if chamber is directly provided in the member object
+  if (member.chamber) {
+    if (member.chamber === 'House of Representatives' || member.chamber === 'House') return 'House'
+    if (member.chamber === 'Senate') return 'Senate'
   }
 
-  // Get most recent term
-  const latestTerm = member.terms.item.reduce((latest, term) => {
-    return term.endYear > latest.endYear ? term : latest
-  })
+  // Fall back to checking terms data if available
+  if (member.terms && member.terms.item && member.terms.item.length > 0) {
+    // Get most recent term
+    const latestTerm = member.terms.item.reduce((latest, term) => {
+      return term.endYear > latest.endYear ? term : latest
+    })
 
-  if (latestTerm.chamber === 'House of Representatives') return 'House'
-  if (latestTerm.chamber === 'Senate') return 'Senate'
+    if (latestTerm.chamber === 'House of Representatives' || latestTerm.chamber === 'House') return 'House'
+    if (latestTerm.chamber === 'Senate') return 'Senate'
+  }
+
   return null
 }
 
