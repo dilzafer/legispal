@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { GoogleGenerativeAI, DynamicRetrievalMode } from '@google/generative-ai'
+import { GoogleGenerativeAI } from '@google/generative-ai'
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '')
 
@@ -73,16 +73,11 @@ export async function GET(request: NextRequest) {
     Make sure to focus on factual, recent events from the past week and provide balanced analysis based on current information.
     `
 
-    // Use legacy google_search_retrieval with dynamic mode for more reliable grounding
+    // Use Google Search grounding for real-time information
     const result = await model.generateContent({
-      contents: [{ role: 'user', parts: [{ text: prompt }] }],
+      contents: [{ parts: [{ text: prompt }] }],
       tools: [{
-        googleSearchRetrieval: {
-          dynamicRetrievalConfig: {
-            mode: DynamicRetrievalMode.MODE_DYNAMIC,
-            dynamicThreshold: 0.5 // Lower threshold to ensure search happens
-          }
-        }
+        googleSearch: {}
       }],
       generationConfig: {
         temperature: 0.7,
